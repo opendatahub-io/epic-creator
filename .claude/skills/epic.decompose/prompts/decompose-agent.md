@@ -12,9 +12,9 @@ Architecture context: .context/architecture-context/
 
 Read the strategy file. Run these checks in order; first match terminates the flow:
 
-**Check 1 — Below threshold**: If the strategy is S-sized AND affects a single component AND a single team AND ≥67% of scope would score High AI implementability: write a single-page implementation brief to `artifacts/epic-tasks/{ID}-decomposition.md` (scope, acceptance criteria, target repo, key files) and stop. No DAG, no multi-epic output.
+**Check 1 — Below threshold**: If the strategy is S-sized AND affects a single component AND a single team AND ≥67% of scope would score High AI implementability: produce a single epic file `artifacts/epic-tasks/{ID}-E001.md` (with full frontmatter and body per Step 8) and a decomposition summary with `epic_count: 1`, `critical_path_length: 1`, `triage: below-threshold`, and `triage_rationale` explaining why. Then stop — no DAG, no multi-step decomposition.
 
-**Check 2 — Documentation only**: If all affected components have "No code changes" or "reference only": write a single Implementation epic with `implementation_type: docs-authoring`, content outline, and mandatory accuracy validation against architecture context. Then skip to Step 8 to write the files and stop.
+**Check 2 — Documentation only**: If all affected components have "No code changes" or "reference only": produce a single epic file with `implementation_type: docs-authoring`, content outline, and mandatory accuracy validation against architecture context. Write the decomposition summary with `epic_count: 1`, `critical_path_length: 1`, `triage: docs-only`. Then stop.
 
 If neither check fires, proceed to Step 1.
 

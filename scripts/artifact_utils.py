@@ -152,13 +152,11 @@ SCHEMAS = {
         },
         "epic_count": {
             "type": "int",
-            "required": False,
-            "default": None,
+            "required": True,
         },
         "critical_path_length": {
             "type": "int",
-            "required": False,
-            "default": None,
+            "required": True,
         },
         "revised": {
             "type": "bool",
