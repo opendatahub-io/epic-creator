@@ -1,0 +1,5 @@
+tmp/
+.context/
+__pycache__/
+*.pyc
+.env
