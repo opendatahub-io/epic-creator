@@ -20,7 +20,11 @@ If the decomposition summary does not exist, write the review file with `error: 
 
 ## Step 2: Review Against Quality Criteria
 
-Evaluate the decomposition against these 8 criteria. For each, note specific issues found with severity (critical, major, minor).
+Evaluate the decomposition against these 8 criteria. For each, note specific issues found with severity:
+
+- **Critical**: Structural defect — circular DAG, P0 HLR unmapped, epic type fundamentally wrong, missing decomposition summary
+- **Major**: Rule violation or factual error — missing rule-mandated AC (rules 24-26), frontmatter field contradicts summary table, wrong team/component assignment, unjustified blocking edge that serializes parallel work, AI implementability score contradicts signals
+- **Minor**: Style or completeness nit — could be more explicit but doesn't cause incorrect execution (e.g., a "should" NFR not explicitly addressed, slightly imprecise component name)
 
 ### Criterion 1: HLR Coverage (0-2 points)
 
@@ -82,8 +86,13 @@ Check: Compare the strategy's scope, acceptance criteria, and capabilities again
 
 ## Step 3: Score and Decide
 
-Sum the points across all 8 criteria (max 10).
+Sum the points across all 8 criteria (max 10). When scoring each criterion, severity matters:
 
+- **Critical** issue in a criterion → score 0 for that criterion
+- **Major** issue in a criterion → lose at least 1 point (score the lower value in multi-point criteria, or 0 in single-point criteria)
+- **Minor** issues alone do not reduce the score, but 3+ minors in the same criterion costs 1 point
+
+Thresholds:
 - **Pass (score ≥ 7)**: Decomposition is acceptable. Recommendation: `accept`
 - **Fail (score < 7)**: Decomposition needs revision. Recommendation: `revise`
 

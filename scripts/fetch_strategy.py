@@ -6,48 +6,39 @@ Usage:
     python3 scripts/fetch_strategy.py fetch-one <RHAISTRAT-ID>
 """
 
-import json
 import os
-import re
 import sys
 
-import requests
+sys.path.insert(0, os.path.dirname(__file__))
+from jira_utils import require_env, get_issue, api_call_with_retry, adf_to_markdown
 
-
-def _jira_auth():
-    server = os.environ.get("JIRA_SERVER")
-    user = os.environ.get("JIRA_USER")
-    token = os.environ.get("JIRA_TOKEN")
-    if not all([server, user, token]):
-        print("ERROR: JIRA_SERVER, JIRA_USER, and JIRA_TOKEN must be set",
-              file=sys.stderr)
-        sys.exit(1)
-    return server, user, token
+import yaml
 
 
 def _fetch_issue(server, user, token, key):
-    url = f"{server}/rest/api/2/issue/{key}"
-    params = {"fields": "summary,description,labels,issuelinks,status,priority"}
-    resp = requests.get(url, auth=(user, token), params=params)
-    if resp.status_code != 200:
-        print(f"ERROR: Failed to fetch {key}: {resp.status_code}",
-              file=sys.stderr)
-        return None
-    return resp.json()
+    fields = ["summary", "description", "labels", "issuelinks", "status",
+              "priority"]
+    return get_issue(server, user, token, key, fields=fields)
 
 
 def _write_strategy(issue_data, output_dir="artifacts/strat-tasks"):
     key = issue_data["key"]
     fields = issue_data["fields"]
     title = fields.get("summary", "")
-    description = fields.get("description", "") or ""
+    desc_raw = fields.get("description")
     labels = fields.get("labels", [])
     status = fields.get("status", {}).get("name", "")
     priority = fields.get("priority", {}).get("name", "")
 
+    if isinstance(desc_raw, dict):
+        description = adf_to_markdown(desc_raw).strip()
+    elif desc_raw:
+        description = str(desc_raw).strip()
+    else:
+        description = ""
+
     links = []
     for link in fields.get("issuelinks", []):
-        link_type = link.get("type", {}).get("name", "")
         if "outwardIssue" in link:
             target = link["outwardIssue"]["key"]
             direction = link["type"].get("outward", "")
@@ -60,27 +51,48 @@ def _write_strategy(issue_data, output_dir="artifacts/strat-tasks"):
     os.makedirs(output_dir, exist_ok=True)
     path = os.path.join(output_dir, f"{key}.md")
 
+    frontmatter = {
+        "strat_id": key,
+        "title": title,
+        "status": status,
+        "priority": priority,
+        "labels": labels if labels else [],
+        "links": links if links else [],
+    }
+
     with open(path, "w") as f:
         f.write("---\n")
-        f.write(f"strat_id: {key}\n")
-        f.write(f"title: \"{title}\"\n")
-        f.write(f"status: {status}\n")
-        f.write(f"priority: {priority}\n")
-        f.write(f"labels:\n")
-        for label in labels:
-            f.write(f"  - {label}\n")
-        if not labels:
-            f.write(f"  []\n")
-        f.write(f"links:\n")
-        for link in links:
-            f.write(f"  - \"{link}\"\n")
-        if not links:
-            f.write(f"  []\n")
+        f.write(yaml.dump(frontmatter, default_flow_style=False,
+                          sort_keys=False, allow_unicode=True))
         f.write("---\n\n")
         f.write(description)
         f.write("\n")
 
     return path
+
+
+def _search_issues(server, user, token, jql, limit=100):
+    """Search for issues using JQL with pagination."""
+    start = 0
+    all_issues = []
+    fields = "summary,description,labels,issuelinks,status,priority"
+
+    while start < limit:
+        batch_size = min(50, limit - start)
+        path = (f"/search?jql={jql}&startAt={start}"
+                f"&maxResults={batch_size}&fields={fields}")
+        data = api_call_with_retry(server, path, user, token)
+
+        issues = data.get("issues", [])
+        if not issues:
+            break
+
+        all_issues.extend(issues)
+        start += len(issues)
+        if start >= data.get("total", 0):
+            break
+
+    return all_issues
 
 
 def cmd_fetch(args):
@@ -94,41 +106,21 @@ def cmd_fetch(args):
     parser.add_argument("--data-dir", help="Data directory (unused, for compat)")
     opts = parser.parse_args(args)
 
-    server, user, token = _jira_auth()
+    server, user, token = require_env()
+    if not all([server, user, token]):
+        print("ERROR: JIRA_SERVER, JIRA_USER, and JIRA_TOKEN must be set",
+              file=sys.stderr)
+        sys.exit(1)
 
-    url = f"{server}/rest/api/2/search"
-    start = 0
+    issues = _search_issues(server, user, token, opts.jql, opts.limit)
+
     all_keys = []
-
-    while start < opts.limit:
-        batch_size = min(50, opts.limit - start)
-        params = {
-            "jql": opts.jql,
-            "startAt": start,
-            "maxResults": batch_size,
-            "fields": "summary,description,labels,issuelinks,status,priority",
-        }
-        resp = requests.get(url, auth=(user, token), params=params)
-        if resp.status_code != 200:
-            print(f"ERROR: JQL search failed: {resp.status_code}",
-                  file=sys.stderr)
-            sys.exit(1)
-
-        data = resp.json()
-        issues = data.get("issues", [])
-        if not issues:
-            break
-
-        for issue in issues:
-            key = issue["key"]
-            _write_strategy(issue)
-            all_keys.append(key)
-            print(f"Fetched {key}: {issue['fields'].get('summary', '')[:60]}",
-                  file=sys.stderr)
-
-        start += len(issues)
-        if start >= data.get("total", 0):
-            break
+    for issue in issues:
+        key = issue["key"]
+        _write_strategy(issue)
+        all_keys.append(key)
+        print(f"Fetched {key}: {issue['fields'].get('summary', '')[:60]}",
+              file=sys.stderr)
 
     os.makedirs(os.path.dirname(opts.ids_file) or "tmp", exist_ok=True)
     with open(opts.ids_file, "w") as f:
@@ -143,7 +135,11 @@ def cmd_fetch_one(args):
         print("Usage: fetch-one <RHAISTRAT-ID>", file=sys.stderr)
         sys.exit(1)
     key = args[0]
-    server, user, token = _jira_auth()
+    server, user, token = require_env()
+    if not all([server, user, token]):
+        print("ERROR: JIRA_SERVER, JIRA_USER, and JIRA_TOKEN must be set",
+              file=sys.stderr)
+        sys.exit(1)
     issue = _fetch_issue(server, user, token, key)
     if not issue:
         sys.exit(1)
