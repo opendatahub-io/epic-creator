@@ -41,7 +41,7 @@ For each issue in the review's `issues` list, apply the appropriate correction:
 - **Implementation should be Investigation**: Change the `type` field to Investigation. Add downstream blocking edges to epics whose scope depends on this epic's outcome.
 
 ### AI Implementability Scoring issues
-- **Score contradicts signals**: Recalculate using the 10-signal rubric. Each signal: +1 (favorable) or -1 (unfavorable). Thresholds: ≥3=High, 0-2=Medium, ≤-1=Low. Update both `ai_implementability` and `ai_implementability_score` in frontmatter, and the signals breakdown in the body.
+- **Score contradicts signals**: Recalculate using the 9-signal rubric. Each signal: +1 (favorable) or -1 (unfavorable). Thresholds: ≥3=High, 0-2=Medium, ≤-1=Low. Update both `ai_implementability` and `ai_implementability_score` in frontmatter, and the signals breakdown in the body.
 
 ### Ambiguity Handling issues
 - **Missing ambiguity flag**: Add a structured flag to the decomposition summary's `ambiguity_flags` list: `{issue, judgment_call, impact}`. Set `needs_clarification: true` if not already set.

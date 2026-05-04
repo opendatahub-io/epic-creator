@@ -145,7 +145,7 @@ For each epic, determine:
 
 ### AI Implementability Score
 
-Score each epic using the 10-signal rubric below. Each signal contributes +1 (favorable) or -1 (unfavorable). Thresholds: **≥3 = High, 0-2 = Medium, ≤-1 = Low**.
+Score each epic using the 9-signal rubric below. Each signal contributes +1 (favorable) or -1 (unfavorable). Thresholds: **≥3 = High, 0-2 = Medium, ≤-1 = Low**.
 
 | # | Signal | +1 Condition | -1 Condition |
 |---|--------|-------------|-------------|
@@ -158,7 +158,6 @@ Score each epic using the 10-signal rubric below. Each signal contributes +1 (fa
 | 7 | Human process gates | None | Requires human approval step |
 | 8 | Repo access | AI can clone and modify target repo | Repo inaccessible or special access required |
 | 9 | Architecture claims | Strategy cites specific architecture context files/APIs | Unsubstantiated architecture claims |
-| 10 | Customer commitment | N/A (always 0 — flag urgency separately) | N/A |
 
 The numeric scoring rubric is authoritative. Show which signals fired and the direction each pulled.
 

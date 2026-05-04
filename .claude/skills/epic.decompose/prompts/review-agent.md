@@ -54,11 +54,11 @@ Check: For each epic, verify component and team fields. Look for epics that bund
 - **1**: Investigation epics genuinely resolve uncertainty that changes downstream structure. Implementation epics produce artifacts. No misclassifications.
 - **0**: An epic typed as Investigation should be Implementation (or vice versa). Test: does the outcome of this "Investigation" actually change which downstream epics exist or what they do? If no, it should be an Implementation or an acceptance criterion.
 
-Check: For each Investigation epic, verify it has downstream epics that depend on its outcome. For each Implementation, verify it produces a concrete artifact.
+Check: For each Investigation epic, verify it has downstream epics that depend on its outcome. For each Implementation, verify it produces a concrete artifact. For every epic with a non-null `gated_by` field, verify `gate_failure_impact` has both `action` and `fallback_approach` populated — if nothing changes on gate failure, this is a scheduling dependency (belongs in `dependencies` only), not a true gate (major issue).
 
 ### Criterion 5: AI Implementability Scoring (0-1 point)
 
-- **1**: Scores are consistent with the 10-signal rubric. Signals are shown and direction is justified. Thresholds applied correctly (≥3=High, 0-2=Medium, ≤-1=Low).
+- **1**: Scores are consistent with the 9-signal rubric. Signals are shown and direction is justified. Thresholds applied correctly (≥3=High, 0-2=Medium, ≤-1=Low).
 - **0**: Scores contradict visible signals (e.g., scored High but has 2+ unresolved questions and external dependencies), or signal breakdown missing.
 
 Check: For each epic, read the AI implementability signals section. Verify the arithmetic. Spot-check 2-3 epics for signal accuracy against strategy content.
