@@ -53,7 +53,8 @@ _BlockDumper.add_representer(str, _str_representer)
 
 PHASES = [
     "BATCH_START", "FETCH", "DECOMPOSE", "REVIEW_DECOMP",
-    "REVISE_CHECK", "REVISE_DECOMP", "FIXUP",
+    "REVISE_DECOMP",
+    "RE_REVIEW_CHECK", "RE_REVIEW", "REVISE_CHECK", "RE_REVISE",
     "BATCH_DONE", "ERROR_COLLECT",
     "REPORT", "DONE",
 ]
@@ -83,15 +84,29 @@ PHASE_CONFIG = {
         "poll_phase": "review_decomp",
         "vars": {"ID": "{ID}"},
     },
-    "REVISE_CHECK": {"type": "noop"},
     "REVISE_DECOMP": {
+        "type": "agent",
+        "prompt": ".claude/skills/epic.decompose/prompts/revise-agent.md",
+        "ids_file": "tmp/pipeline-active-ids.txt",
+        "poll_phase": "revise_decomp",
+        "vars": {"ID": "{ID}"},
+    },
+    "RE_REVIEW_CHECK": {"type": "noop"},
+    "RE_REVIEW": {
+        "type": "agent",
+        "prompt": ".claude/skills/epic.decompose/prompts/review-agent.md",
+        "ids_file": "tmp/pipeline-revise-ids.txt",
+        "poll_phase": "review_decomp",
+        "vars": {"ID": "{ID}"},
+    },
+    "REVISE_CHECK": {"type": "noop"},
+    "RE_REVISE": {
         "type": "agent",
         "prompt": ".claude/skills/epic.decompose/prompts/revise-agent.md",
         "ids_file": "tmp/pipeline-revise-ids.txt",
         "poll_phase": "revise_decomp",
         "vars": {"ID": "{ID}"},
     },
-    "FIXUP": {"type": "noop"},
 
     # --- Batch control + retry ---
     "BATCH_DONE": {"type": "noop"},
@@ -145,6 +160,19 @@ def _copy_ids(src, dst):
     shutil.copy2(src, dst)
 
 
+def _reset_revised_flag(decomp_path):
+    """Reset revised: true → false in decomposition frontmatter."""
+    from artifact_utils import read_frontmatter
+    data, body = read_frontmatter(decomp_path)
+    if data and data.get("revised"):
+        data["revised"] = False
+        with open(decomp_path, "w") as f:
+            f.write("---\n")
+            f.write(yaml.dump(data, default_flow_style=False, sort_keys=False))
+            f.write("---\n")
+            f.write(body)
+
+
 def _run_script(cmd):
     result = subprocess.run(
         cmd, shell=True, capture_output=True, text=True)
@@ -183,39 +211,80 @@ def advance(state, dry_run=False):
         nxt = MAIN_SEQUENCE[MAIN_SEQUENCE.index(phase) + 1]
         return nxt, f"{phase} → {nxt}"
 
-    # --- REVIEW_DECOMP → REVISE_CHECK ---
+    # --- REVIEW_DECOMP → REVISE_DECOMP (always revise on first pass) ---
     if phase == "REVIEW_DECOMP":
-        return "REVISE_CHECK", "REVIEW_DECOMP → REVISE_CHECK"
+        return "REVISE_DECOMP", "REVIEW_DECOMP → REVISE_DECOMP: first revision (unconditional)"
 
-    # --- REVISE_CHECK decision ---
+    # --- REVISE_DECOMP → RE_REVIEW_CHECK ---
+    if phase == "REVISE_DECOMP":
+        return "RE_REVIEW_CHECK", "REVISE_DECOMP → RE_REVIEW_CHECK"
+
+    # --- RE_REVIEW_CHECK: did revision change anything? ---
+    if phase == "RE_REVIEW_CHECK":
+        from artifact_utils import read_frontmatter
+        cycle = state.get("revise_cycle", 0)
+        if cycle == 0:
+            check_ids = _read_ids("tmp/pipeline-active-ids.txt")
+        else:
+            check_ids = _read_ids("tmp/pipeline-revise-ids.txt")
+        revised_ids = []
+        for strat_id in check_ids:
+            decomp_path = f"artifacts/epic-tasks/{strat_id}-decomposition.md"
+            if os.path.exists(decomp_path):
+                try:
+                    data, _ = read_frontmatter(decomp_path)
+                    if data and data.get("revised"):
+                        revised_ids.append(strat_id)
+                except Exception:
+                    pass
+        if not revised_ids:
+            return "BATCH_DONE", "RE_REVIEW_CHECK → BATCH_DONE: revision made no changes"
+        if not dry_run:
+            _write_ids("tmp/pipeline-revise-ids.txt", revised_ids)
+            # Delete old review files so the poller can detect fresh reviews
+            for strat_id in revised_ids:
+                review_path = f"artifacts/epic-reviews/{strat_id}-decomp-review.md"
+                if os.path.exists(review_path):
+                    os.remove(review_path)
+        return ("RE_REVIEW",
+                f"RE_REVIEW_CHECK → RE_REVIEW: {len(revised_ids)} revised")
+
+    # --- RE_REVIEW → REVISE_CHECK ---
+    if phase == "RE_REVIEW":
+        return "REVISE_CHECK", "RE_REVIEW → REVISE_CHECK"
+
+    # --- REVISE_CHECK: only revise again if review fails, with cycle cap ---
     if phase == "REVISE_CHECK":
-        active_ids = _read_ids("tmp/pipeline-active-ids.txt")
-        revise_ids = []
-        for strat_id in active_ids:
+        from artifact_utils import read_frontmatter
+        revise_ids = _read_ids("tmp/pipeline-revise-ids.txt")
+        failing_ids = []
+        for strat_id in revise_ids:
             review_path = f"artifacts/epic-reviews/{strat_id}-decomp-review.md"
             if os.path.exists(review_path):
                 try:
-                    from artifact_utils import read_frontmatter
                     data, _ = read_frontmatter(review_path)
                     if data and not data.get("pass", True):
-                        revise_ids.append(strat_id)
+                        failing_ids.append(strat_id)
                 except Exception:
                     pass
-        if not dry_run:
-            _write_ids("tmp/pipeline-revise-ids.txt", revise_ids)
-        if revise_ids:
-            return ("REVISE_DECOMP",
-                    f"REVISE_CHECK → REVISE_DECOMP:"
-                    f" revise={len(revise_ids)}")
-        return "BATCH_DONE", "REVISE_CHECK → BATCH_DONE: no revision needed"
+        cycle = state.get("revise_cycle", 0)
+        if failing_ids and cycle < 2:
+            if not dry_run:
+                state["revise_cycle"] = cycle + 1
+                _write_ids("tmp/pipeline-revise-ids.txt", failing_ids)
+                # Reset revised flag so poller detects new changes
+                for strat_id in failing_ids:
+                    decomp_path = f"artifacts/epic-tasks/{strat_id}-decomposition.md"
+                    if os.path.exists(decomp_path):
+                        _reset_revised_flag(decomp_path)
+            return ("RE_REVISE",
+                    f"REVISE_CHECK → RE_REVISE:"
+                    f" failing={len(failing_ids)} cycle={cycle + 1}/2")
+        return "BATCH_DONE", "REVISE_CHECK → BATCH_DONE: review passed or cycle cap reached"
 
-    # --- REVISE_DECOMP → FIXUP ---
-    if phase == "REVISE_DECOMP":
-        return "FIXUP", "REVISE_DECOMP → FIXUP"
-
-    # --- FIXUP → BATCH_DONE ---
-    if phase == "FIXUP":
-        return "BATCH_DONE", "FIXUP → BATCH_DONE"
+    # --- RE_REVISE → RE_REVIEW_CHECK (loop back) ---
+    if phase == "RE_REVISE":
+        return "RE_REVIEW_CHECK", "RE_REVISE → RE_REVIEW_CHECK"
 
     # --- BATCH_DONE decision ---
     if phase == "BATCH_DONE":
@@ -654,6 +723,7 @@ def cmd_diagnose(args):
     phase = state["phase"]
     print(f"Phase: {phase}")
     print(f"Batch: {state.get('batch', 0)}/{state.get('total_batches', 0)}")
+    print(f"Revise cycle: {state.get('revise_cycle', 0)}/2")
     print(f"Retry cycle: {state.get('retry_cycle', 0)}/1")
 
     id_files = [
