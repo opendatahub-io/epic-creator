@@ -191,9 +191,34 @@ Each epic gets acceptance criteria derived from:
 
 ## Step 8: Generate Artifacts
 
-### Per-epic files
+### Step 8a: Write decomposition summary (the plan)
 
-Write one file per epic to `artifacts/epic-tasks/{ID}-ENNN.md` (e.g., `{ID}-E001.md`, `{ID}-E002.md`).
+Write the decomposition summary **first** — this is the blueprint for all epic files.
+
+Write `artifacts/epic-tasks/{ID}-decomposition.md` with this frontmatter:
+
+```yaml
+---
+parent_strat: "{ID}"
+needs_clarification: false       # true if any ambiguity flags
+ambiguity_flags: []              # list of {issue, judgment_call, impact} objects
+epic_count: 5                    # total epics generated
+critical_path_length: 3          # longest chain in DAG
+---
+```
+
+Body sections for the summary:
+- **Epic List** (table: ID, title, type, team, priority)
+- **Dependency DAG** (Mermaid diagram showing edges)
+- **DAG Justification** (table: edge, rule, rationale)
+- **HLR Traceability Matrix** (HLR → epic mapping, confirming full coverage)
+- **Health Warnings** (priority inversions, scope traps — if any)
+- **Ambiguity Flags** (if any — details of each flag)
+- **Tiered Delivery** (if applicable — Tier 1 vs Tier 2 split)
+
+### Step 8b: Write per-epic files
+
+Write one file per epic to `artifacts/epic-tasks/{ID}-ENNN.md` (e.g., `{ID}-E001.md`, `{ID}-E002.md`), following the decomposition summary as the plan. Each epic's `dependencies`, `priority`, `type`, and HLR mappings must match what the summary specifies.
 
 Each file must have this frontmatter:
 
@@ -236,27 +261,14 @@ Body sections for each epic file:
 - **HLR Traceability** (which strategy HLRs this epic covers)
 - **AI Implementability Signals** (which signals fired and rationale — do not include a total score line)
 
-### Decomposition summary
+### Step 8c: Verify consistency
 
-Write `artifacts/epic-tasks/{ID}-decomposition.md` with this frontmatter:
-
-```yaml
----
-parent_strat: "{ID}"
-needs_clarification: false       # true if any ambiguity flags
-ambiguity_flags: []              # list of {issue, judgment_call, impact} objects
-epic_count: 5                    # total epics generated
-critical_path_length: 3          # longest chain in DAG
----
+After writing all epic files, run:
+```
+python3 scripts/frontmatter.py batch-read artifacts/epic-tasks/{ID}-E*.md
 ```
 
-Body sections for the summary:
-- **Epic List** (table: ID, title, type, team, priority, AI implementability)
-- **Dependency DAG** (ASCII or Mermaid diagram showing edges)
-- **HLR Traceability Matrix** (HLR → epic mapping, confirming full coverage)
-- **Health Warnings** (priority inversions, scope traps — if any)
-- **Ambiguity Flags** (if any — details of each flag)
-- **Tiered Delivery** (if applicable — Tier 1 vs Tier 2 split)
+Compare the output against the decomposition summary. If any epic file's `dependencies`, `priority`, `type`, or HLR mappings diverged from the plan, fix the epic file to match the summary.
 
 ### Conditional decomposition (when applicable)
 
