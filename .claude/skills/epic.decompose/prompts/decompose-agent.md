@@ -143,23 +143,23 @@ For each epic, determine:
 | `repo-onboarding` | Midstream repo fork creation under opendatahub-io |
 | _(absent/null)_ | General-purpose — read target repo, figure it out |
 
-### AI Implementability Score
+### AI Implementability Signals
 
-Score each epic using the 9-signal rubric below. Each signal contributes +1 (favorable) or -1 (unfavorable). Thresholds: **≥3 = High, 0-2 = Medium, ≤-1 = Low**.
+Evaluate each of the 9 signals below as +1 (favorable), 0 (neutral/N/A), or -1 (unfavorable). Write the values into `ai_signals` in frontmatter. **Do not compute the total score or classification** — the pipeline computes those deterministically after you finish.
 
-| # | Signal | +1 Condition | -1 Condition |
-|---|--------|-------------|-------------|
-| 1 | Change specificity | Exact file paths, API endpoints, field names known | Vague scope ("improve X") |
-| 2 | Pattern precedent | Similar changes exist in same codebase | No precedent in codebase |
-| 3 | Adapter/plugin pattern | Follows existing reference implementation | N/A (0 if absent) |
-| 4 | Existing foundation | Extending existing code/feature | Greenfield, no foundation |
-| 5 | Open questions | 0 unresolved questions for this epic | ≥2 unresolved questions |
-| 6 | External dependency | None | Upstream contribution or vendor coordination needed |
-| 7 | Human process gates | None | Requires human approval step |
-| 8 | Repo access | AI can clone and modify target repo | Repo inaccessible or special access required |
-| 9 | Architecture claims | Strategy cites specific architecture context files/APIs | Unsubstantiated architecture claims |
+| # | Signal | Frontmatter key | +1 Condition | -1 Condition |
+|---|--------|----------------|-------------|-------------|
+| 1 | Change specificity | `change_specificity` | Exact file paths, API endpoints, field names known | Vague scope ("improve X") |
+| 2 | Pattern precedent | `pattern_precedent` | Similar changes exist in same codebase | No precedent in codebase |
+| 3 | Adapter/plugin pattern | `adapter_pattern` | Follows existing reference implementation | N/A (0 if absent) |
+| 4 | Existing foundation | `existing_foundation` | Extending existing code/feature | Greenfield, no foundation |
+| 5 | Open questions | `open_questions` | 0 unresolved questions for this epic | ≥2 unresolved questions |
+| 6 | External dependency | `external_dependency` | None | Upstream contribution or vendor coordination needed |
+| 7 | Human process gates | `human_process_gates` | None | Requires human approval step |
+| 8 | Repo access | `repo_access` | AI can clone and modify target repo | Repo inaccessible or special access required |
+| 9 | Architecture claims | `architecture_claims` | Strategy cites specific architecture context files/APIs | Unsubstantiated architecture claims |
 
-The numeric scoring rubric is authoritative. Show which signals fired and the direction each pulled.
+Show which signals fired and the direction each pulled in the epic body's "AI Implementability Signals" section.
 
 ## Step 6.5: Health Warnings and Ambiguity Flags
 
@@ -208,8 +208,16 @@ implementation_type: null         # or docs-authoring, konflux-onboarding, licen
 priority: "P0"                   # P0, P1, or P2
 dependencies:                    # list of epic IDs this depends on
   - "{ID}-E002"
-ai_implementability: "High"      # High, Medium, or Low
-ai_implementability_score: 4     # numeric score from rubric
+ai_signals:                      # individual signal evaluations (+1, 0, or -1)
+  change_specificity: 1
+  pattern_precedent: 1
+  adapter_pattern: 0
+  existing_foundation: 1
+  open_questions: -1
+  external_dependency: 0
+  human_process_gates: -1
+  repo_access: 1
+  architecture_claims: 1
 branch: null                     # for conditional decompositions
 gated_by: null                   # epic ID of gating investigation
 gate_failure_impact:
@@ -218,13 +226,15 @@ gate_failure_impact:
 ---
 ```
 
+Do **not** include `ai_implementability` or `ai_implementability_score` in frontmatter — the pipeline computes those from `ai_signals` automatically.
+
 Body sections for each epic file:
 - **Title** (one line)
 - **Description** (what this epic delivers)
 - **Scope** (specific changes in this epic)
 - **Acceptance Criteria** (derived from strategy)
 - **HLR Traceability** (which strategy HLRs this epic covers)
-- **AI Implementability Signals** (which signals fired, score breakdown)
+- **AI Implementability Signals** (which signals fired and rationale — do not include a total score line)
 
 ### Decomposition summary
 

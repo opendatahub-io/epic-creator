@@ -58,10 +58,10 @@ Check: For each Investigation epic, verify it has downstream epics that depend o
 
 ### Criterion 5: AI Implementability Scoring (0-1 point)
 
-- **1**: Scores are consistent with the 9-signal rubric. Signals are shown and direction is justified. Thresholds applied correctly (≥3=High, 0-2=Medium, ≤-1=Low).
-- **0**: Scores contradict visible signals (e.g., scored High but has 2+ unresolved questions and external dependencies), or signal breakdown missing.
+- **1**: Each signal's +1/0/-1 value in `ai_signals` frontmatter is consistent with the 9-signal rubric conditions and the strategy content. Signal rationales in the body are justified.
+- **0**: Signal values contradict the rubric conditions (e.g., `open_questions: 1` but the epic has 2+ unresolved questions), or `ai_signals` is missing from frontmatter, or signal breakdown is missing from the body.
 
-Check: For each epic, read the AI implementability signals section. Verify the arithmetic. Spot-check 2-3 epics for signal accuracy against strategy content.
+Check: For each epic, verify the `ai_signals` values in frontmatter against the rubric conditions and strategy content. Cross-check that the body's signal rationales match the frontmatter values. Do **not** check arithmetic or thresholds — `ai_implementability` and `ai_implementability_score` are computed by the pipeline, not the decompose agent.
 
 ### Criterion 6: Ambiguity Handling (0-1 point)
 

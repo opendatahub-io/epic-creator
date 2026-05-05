@@ -185,6 +185,17 @@ def _run_script(cmd):
     return result.stdout.strip()
 
 
+def _compute_ai_scores(ids_file):
+    """Compute AI implementability scores from signal values in epic frontmatter."""
+    ids = _read_ids(ids_file)
+    if not ids:
+        return
+    cmd = f"python3 scripts/compute_ai_scores.py {' '.join(ids)}"
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if result.stderr:
+        print(result.stderr, file=sys.stderr)
+
+
 # ---------- Transition logic ----------
 
 MAIN_SEQUENCE = ["FETCH", "DECOMPOSE", "REVIEW_DECOMP"]
@@ -209,6 +220,8 @@ def advance(state, dry_run=False):
     # --- Linear main sequence ---
     if phase in MAIN_SEQUENCE[:-1]:
         nxt = MAIN_SEQUENCE[MAIN_SEQUENCE.index(phase) + 1]
+        if phase == "DECOMPOSE" and not dry_run:
+            _compute_ai_scores("tmp/pipeline-active-ids.txt")
         return nxt, f"{phase} → {nxt}"
 
     # --- REVIEW_DECOMP → REVISE_DECOMP (always revise on first pass) ---
@@ -217,6 +230,8 @@ def advance(state, dry_run=False):
 
     # --- REVISE_DECOMP → RE_REVIEW_CHECK ---
     if phase == "REVISE_DECOMP":
+        if not dry_run:
+            _compute_ai_scores("tmp/pipeline-active-ids.txt")
         return "RE_REVIEW_CHECK", "REVISE_DECOMP → RE_REVIEW_CHECK"
 
     # --- RE_REVIEW_CHECK: did revision change anything? ---
@@ -284,6 +299,8 @@ def advance(state, dry_run=False):
 
     # --- RE_REVISE → RE_REVIEW_CHECK (loop back) ---
     if phase == "RE_REVISE":
+        if not dry_run:
+            _compute_ai_scores("tmp/pipeline-revise-ids.txt")
         return "RE_REVIEW_CHECK", "RE_REVISE → RE_REVIEW_CHECK"
 
     # --- BATCH_DONE decision ---
