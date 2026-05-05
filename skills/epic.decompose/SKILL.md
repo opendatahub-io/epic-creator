@@ -104,7 +104,7 @@ action: launch_wave
 phase: DECOMPOSE
 message: "DECOMPOSE: wave 1/2 (5 IDs)"
 agents:
-  - prompt_file: .claude/skills/epic.decompose/prompts/decompose-agent.md
+  - prompt_file: skills/epic.decompose/prompts/decompose-agent.md
     vars: |
       ID=RHAISTRAT-1234
 ```

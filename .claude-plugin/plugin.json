@@ -1,0 +1,8 @@
+{
+  "name": "epic-creator",
+  "description": "Decompose RHAISTRAT strategies into implementation epic DAGs with adversarial review",
+  "version": "1.0.0",
+  "author": {
+    "name": "Jessica Forrester"
+  }
+}

@@ -1,3 +1,4 @@
+artifacts/
 tmp/
 .context/
 __pycache__/
