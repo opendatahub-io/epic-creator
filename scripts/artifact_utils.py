@@ -158,16 +158,6 @@ SCHEMAS = {
             "required": True,
             "pattern": r"^RHAISTRAT-\d+$",
         },
-        "needs_clarification": {
-            "type": "bool",
-            "required": False,
-            "default": False,
-        },
-        "ambiguity_flags": {
-            "type": "list",
-            "required": False,
-            "default": [],
-        },
         "epic_count": {
             "type": "int",
             "required": True,
@@ -189,17 +179,6 @@ SCHEMAS = {
         },
         "triage_rationale": {
             "type": "string",
-            "required": False,
-            "default": None,
-        },
-        "ai_implementability": {
-            "type": "string",
-            "required": False,
-            "enum": ["High", "Medium", "Low"],
-            "default": None,
-        },
-        "ai_implementability_score": {
-            "type": "int",
             "required": False,
             "default": None,
         },

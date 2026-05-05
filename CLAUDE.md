@@ -65,7 +65,7 @@ Read operations use the Jira REST API via `scripts/fetch_strategy.py`.
 
 Write operations use `scripts/attach_decomposition.py` to:
 - Attach decomposition output as a file to the RHAISTRAT
-- Apply `decomp-ready` or `decomp-needs-clarification` label
+- Apply `decomp-ready` label
 
 Required environment variables:
 
@@ -80,7 +80,7 @@ JIRA_TOKEN=your-api-token
 ### RHAISTRAT Project
 - **Project**: `RHAISTRAT`
 - **Issue Type**: `Feature`
-- **Labels applied by this pipeline**: `decomp-ready`, `decomp-needs-clarification`
+- **Labels applied by this pipeline**: `decomp-ready`
 
 ## Pipeline Execution Constraint
 

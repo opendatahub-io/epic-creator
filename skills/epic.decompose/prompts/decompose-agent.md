@@ -161,25 +161,20 @@ Evaluate each of the 9 signals below as +1 (favorable), 0 (neutral/N/A), or -1 (
 
 Show which signals fired and the direction each pulled in the epic body's "AI Implementability Signals" section.
 
-## Step 6.5: Health Warnings and Ambiguity Flags
+## Step 6.5: Health Warnings
 
 ### Non-blocking warnings (decomposition proceeds, human verifies later)
 - Priority inversions (P0/P1/P2 inconsistent with technical complexity/reliability)
 - Scope traps: ACs implying infrastructure that doesn't exist, contradictions between out-of-scope items and NFRs, storage beyond design intent
 
-### Ambiguity flags (decomposition proceeds with best-guess, flags judgment calls)
+### Handling unclear strategy passages
 
-When the strategy description is unclear about something that affects decomposition:
-- Log a structured flag: what was unclear, what judgment was made, what would change if the judgment is wrong
-- Set `needs_clarification: true` in the decomposition summary frontmatter
-- Include flags in the `ambiguity_flags` list
-
-**Ambiguity vs. Investigation distinction — judge carefully:**
+When the strategy is unclear about something, apply this two-way distinction:
 
 | Situation | Handling |
 |-----------|---------|
-| **Ambiguous writing** — the team obviously knows the answer but didn't write it clearly | FLAG for human clarification. Do not create Investigation epic. |
-| **Genuine unknown** — nobody knows yet, resolution requires technical work | Investigation epic with conditional downstream epics. Not an ambiguity flag. |
+| **Implementation detail** — the team will resolve this when they start the work (version choices, API surface discovery, config decisions, validation of assumptions) | Not a flag. Capture as an AC on the relevant epic if needed. Most unclear passages fall here. |
+| **Genuine unknown** — nobody knows yet, resolution requires technical work, and the answer changes which downstream epics exist or what they do | Investigation epic with conditional downstream epics. |
 
 ## Step 7: Derive Acceptance Criteria
 
@@ -200,8 +195,6 @@ Write `artifacts/epic-tasks/{ID}-decomposition.md` with this frontmatter:
 ```yaml
 ---
 parent_strat: "{ID}"
-needs_clarification: false       # true if any ambiguity flags
-ambiguity_flags: []              # list of {issue, judgment_call, impact} objects
 epic_count: 5                    # total epics generated
 critical_path_length: 3          # longest chain in DAG
 ---
@@ -213,7 +206,6 @@ Body sections for the summary:
 - **DAG Justification** (table: edge, rule, rationale)
 - **HLR Traceability Matrix** (HLR → epic mapping, confirming full coverage)
 - **Health Warnings** (priority inversions, scope traps — if any)
-- **Ambiguity Flags** (if any — details of each flag)
 - **Tiered Delivery** (if applicable — Tier 1 vs Tier 2 split)
 
 ### Step 8b: Write per-epic files

@@ -21,7 +21,6 @@ def main():
     passed = 0
     failed = 0
     errors = 0
-    needs_clarification = 0
     total_epics = 0
 
     for strat_id in ids:
@@ -33,8 +32,6 @@ def main():
             data, _ = read_frontmatter(decomp)
             if data:
                 total_epics += data.get("epic_count", 0)
-                if data.get("needs_clarification"):
-                    needs_clarification += 1
 
         if os.path.exists(review):
             reviewed += 1
@@ -52,7 +49,6 @@ def main():
     if counts_only:
         print(f"decomposed={decomposed} reviewed={reviewed} "
               f"passed={passed} failed={failed} errors={errors} "
-              f"needs_clarification={needs_clarification} "
               f"total_epics={total_epics}")
     else:
         print(f"Batch summary ({len(ids)} strategies):")
@@ -61,7 +57,6 @@ def main():
         print(f"  Passed:     {passed}")
         print(f"  Failed:     {failed}")
         print(f"  Errors:     {errors}")
-        print(f"  Needs clarification: {needs_clarification}")
         print(f"  Total epics generated: {total_epics}")
 
 

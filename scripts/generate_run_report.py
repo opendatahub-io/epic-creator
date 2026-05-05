@@ -41,7 +41,6 @@ def main():
         if os.path.exists(decomp):
             data, _ = read_frontmatter(decomp)
             entry["epic_count"] = data.get("epic_count", 0)
-            entry["needs_clarification"] = data.get("needs_clarification", False)
             entry["status"] = "decomposed"
 
         if os.path.exists(review):

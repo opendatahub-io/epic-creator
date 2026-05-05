@@ -43,10 +43,6 @@ For each issue in the review's `issues` list, apply the appropriate correction:
 ### AI Implementability Scoring issues
 - **Signal value incorrect**: Re-evaluate the specific signal(s) the reviewer identified as wrong. Update the `ai_signals` values in frontmatter and the corresponding rationale in the body. Do **not** update `ai_implementability` or `ai_implementability_score` — the pipeline recomputes those automatically from the signal values.
 
-### Ambiguity Handling issues
-- **Missing ambiguity flag**: Add a structured flag to the decomposition summary's `ambiguity_flags` list: `{issue, judgment_call, impact}`. Set `needs_clarification: true` if not already set.
-- **Ambiguity should be Investigation**: Remove the ambiguity flag. Create an Investigation epic with downstream blocking edges. If this was the only flag, set `needs_clarification: false`.
-
 ### Acceptance Criteria issues
 - **Missing rule-mandated AC**: Add the required AC to the epic:
   - Replacement epic → rollback/feature-flag AC
@@ -68,8 +64,6 @@ After all corrections are applied:
    - Set `revised: true`
    - Update `epic_count` to the current total
    - Update `critical_path_length` to the current longest chain
-   - Update `needs_clarification` based on whether any ambiguity flags remain
-   - Update `ambiguity_flags` list if flags were added or removed
 
 ## Step 4: Verify Consistency
 

@@ -63,21 +63,14 @@ Check: For each Investigation epic, verify it has downstream epics that depend o
 
 Check: For each epic, verify the `ai_signals` values in frontmatter against the rubric conditions and strategy content. Cross-check that the body's signal rationales match the frontmatter values. Do **not** check arithmetic or thresholds — `ai_implementability` and `ai_implementability_score` are computed by the pipeline, not the decompose agent.
 
-### Criterion 6: Ambiguity Handling (0-1 point)
-
-- **1**: Genuine ambiguities in the strategy are flagged (not papered over). The ambiguity-vs-investigation distinction is applied correctly. `needs_clarification` is set appropriately in summary frontmatter.
-- **0**: Obvious ambiguity in the strategy is ignored, or a genuine unknown is flagged as ambiguity instead of generating an Investigation epic.
-
-Check: Read the strategy for unclear passages. Verify the decomposition either flags them (if ambiguous writing) or creates Investigation epics (if genuine unknowns). Check that `needs_clarification` matches whether any ambiguity flags exist.
-
-### Criterion 7: Acceptance Criteria Quality (0-1 point)
+### Criterion 6: Acceptance Criteria Quality (0-1 point)
 
 - **1**: Each epic has testable acceptance criteria derived from the strategy. Rule-mandated ACs are present where applicable: rollback/feature-flag for replacements, doc review for docs-authoring, build pipeline green for konflux chain.
 - **0**: Epics have no ACs, or ACs are vague/untestable, or rule-mandated ACs are missing.
 
 Check: Verify each epic has ACs. Check that replacement epics have rollback/feature-flag ACs, docs-authoring has technical review AC, and konflux-chain epics have build pipeline AC.
 
-### Criterion 8: Completeness (0-1 point)
+### Criterion 7: Completeness (0-1 point)
 
 - **1**: All strategy scope is covered by the epic set. No acceptance criteria or capabilities from the strategy are unaccounted for. Conditional branches (if any) cover all bounded outcomes.
 - **0**: Strategy scope is missing from the epic set, or conditional branches don't cover all stated outcomes.
@@ -86,15 +79,15 @@ Check: Compare the strategy's scope, acceptance criteria, and capabilities again
 
 ## Step 3: Score and Decide
 
-Sum the points across all 8 criteria (max 10). When scoring each criterion, severity matters:
+Sum the points across all 7 criteria (max 9). When scoring each criterion, severity matters:
 
 - **Critical** issue in a criterion → score 0 for that criterion
 - **Major** issue in a criterion → lose at least 1 point (score the lower value in multi-point criteria, or 0 in single-point criteria)
 - **Minor** issues alone do not reduce the score, but 3+ minors in the same criterion costs 1 point
 
 Thresholds:
-- **Pass (score ≥ 7)**: Decomposition is acceptable. Recommendation: `accept`
-- **Fail (score < 7)**: Decomposition needs revision. Recommendation: `revise`
+- **Pass (score ≥ 6)**: Decomposition is acceptable. Recommendation: `accept`
+- **Fail (score < 6)**: Decomposition needs revision. Recommendation: `revise`
 
 If the decomposition has fundamental structural problems (circular DAG, majority of HLRs unmapped), recommend `revise` regardless of score.
 
@@ -148,13 +141,10 @@ Recommendation: [accept/revise]
 ### 5. AI Implementability Scoring (X/1)
 <findings>
 
-### 6. Ambiguity Handling (X/1)
+### 6. Acceptance Criteria Quality (X/1)
 <findings>
 
-### 7. Acceptance Criteria Quality (X/1)
-<findings>
-
-### 8. Completeness (X/1)
+### 7. Completeness (X/1)
 <findings>
 ```
 
