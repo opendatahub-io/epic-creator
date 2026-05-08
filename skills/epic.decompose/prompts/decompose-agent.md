@@ -208,6 +208,14 @@ Body sections for the summary:
 - **Health Warnings** (priority inversions, scope traps — if any)
 - **Tiered Delivery** (if applicable — Tier 1 vs Tier 2 split)
 
+### Scope constraint: decompose, don't design
+
+Your job is to break strategy scope into units of work, not to make implementation decisions.
+If the strategy describes a capability at a functional level, the epic scope stays at that level.
+Do not invent API paths, URL schemas, response formats, environment variables, caching policies,
+CRD field names, or other implementation details not stated in the strategy. Those are decisions
+for the implementing team.
+
 ### Step 8b: Write per-epic files
 
 Write one file per epic to `artifacts/epic-tasks/{ID}-ENNN.md` (e.g., `{ID}-E001.md`, `{ID}-E002.md`), following the decomposition summary as the plan. Each epic's `dependencies`, `priority`, `type`, and HLR mappings must match what the summary specifies.
