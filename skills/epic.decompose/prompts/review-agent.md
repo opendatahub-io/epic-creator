@@ -75,7 +75,7 @@ Check: Verify each epic has ACs. Check that replacement epics have rollback/feat
 - **1**: All strategy scope is covered by the epic set. No acceptance criteria or capabilities from the strategy are unaccounted for. Conditional branches (if any) cover all bounded outcomes.
 - **0**: Strategy scope is missing from the epic set, or conditional branches don't cover all stated outcomes.
 
-Check: Compare the strategy's scope, acceptance criteria, and capabilities against the combined epic set. Look for gaps. Also check cross-epic consistency: when an upstream epic's scope covers multiple items (modules, components, APIs), verify that the downstream epic set collectively accounts for all of them — not silently dropped.
+Check: Compare the strategy's scope, acceptance criteria, and capabilities against the combined epic set. Look for gaps. Also check cross-epic consistency: when an upstream epic's scope covers multiple items (modules, components, APIs), verify that the downstream epic set collectively accounts for all of them — not silently dropped. Verify that strategy-level context relevant to an epic's scope (risks, assumptions, open questions, stakeholder commitments, etc.) is carried forward — not silently dropped.
 
 ## Step 3: Score and Decide
 

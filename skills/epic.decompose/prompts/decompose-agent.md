@@ -254,7 +254,7 @@ gate_failure_impact:
 
 Do **not** include `ai_implementability` or `ai_implementability_score` in frontmatter — the pipeline computes those from `ai_signals` automatically.
 
-Body sections for each epic file:
+Body sections for each epic file (minimum — add additional sections when the strategy contains relevant content for this epic's scope, e.g., risks, assumptions, open questions, stakeholder commitments):
 - **Title** (one line)
 - **Description** (what this epic delivers)
 - **Scope** (specific changes in this epic)
