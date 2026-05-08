@@ -70,6 +70,7 @@ For each question, decision, or uncertainty in the strategy:
 - Every HLR must be covered — no orphaned requirements
 - Priority inheritance: prerequisite epic inherits the highest priority of all HLRs it transitively enables
 - An epic blocking all P0 work is implicitly P0
+- Priority split: when an epic maps to HLRs at multiple priority levels, check whether the lower-priority HLRs represent distinct, deferrable features (could be cut from a release without affecting the P0 deliverable). If yes, split them into separate epics by priority so each can be planned independently. If the lower-priority HLR is incidental to the P0 work (error handling, doc coverage, config override that falls out of the same implementation), keep it bundled.
 
 ## Step 5: Build Dependency DAG
 

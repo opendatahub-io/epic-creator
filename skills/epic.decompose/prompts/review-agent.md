@@ -32,7 +32,7 @@ Evaluate the decomposition against these 8 criteria. For each, note specific iss
 - **1**: All P0 HLRs covered but gaps in P1 coverage, or priority inheritance errors (prerequisite epic has lower priority than work it enables).
 - **0**: P0 HLR(s) missing from epic set, or traceability matrix absent.
 
-Check: Read the strategy's HLR list. For each HLR, verify it appears in at least one epic's "HLR Traceability" section. Verify priority inheritance — an epic blocking all P0 work must be P0.
+Check: Read the strategy's HLR list. For each HLR, verify it appears in at least one epic's "HLR Traceability" section. Verify priority inheritance — an epic blocking all P0 work must be P0. Check for priority collapse — if an epic maps to HLRs at multiple priority levels and the lower-priority HLRs are distinct deferrable features (not incidental polish on the P0 work), they should be in separate epics so they can be planned independently.
 
 ### Criterion 2: DAG Coherence (0-2 points)
 
