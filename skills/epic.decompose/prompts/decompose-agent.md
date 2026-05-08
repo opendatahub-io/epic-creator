@@ -177,6 +177,8 @@ When the strategy is unclear about something, apply this two-way distinction:
 | **Implementation detail** — the team will resolve this when they start the work (version choices, API surface discovery, config decisions, validation of assumptions) | Not a flag. Capture as an AC on the relevant epic if needed. Most unclear passages fall here. |
 | **Genuine unknown** — nobody knows yet, resolution requires technical work, and the answer changes which downstream epics exist or what they do | Investigation epic with conditional downstream epics. |
 
+When a strategy explicitly flags something as an open question, pending review, or conditional ADR, treat it as a genuine unknown — the strategy author has already classified it. Do not downgrade to an implementation detail based on descriptive text elsewhere in the strategy. A detailed description of current state is context, not a decision.
+
 ## Step 7: Derive Acceptance Criteria
 
 Each epic gets acceptance criteria derived from:
