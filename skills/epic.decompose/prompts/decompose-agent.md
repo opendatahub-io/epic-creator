@@ -59,12 +59,14 @@ For each (component, change, owner team) tuple from the Affected Components tabl
 
 First, systematically scan the strategy for all unknowns — check the open questions table, risks table, assumptions, pending reviews, and conditional ADRs. Do not rely on the technical approach section alone; open questions are often in tables at the end of the strategy and may contradict or qualify the detailed technical description.
 
-For each question, decision, or uncertainty found:
+Collect the full list of unknowns before creating any Investigation epics. Then evaluate each independently:
 
 **Decision rule: Does the answer change which downstream epics exist or what they do?**
 
 - **YES** → Investigation epic. Determine which downstream epics depend on the outcome. Add as DAG edges. For bounded outcomes (≤3 possibilities): output conditional decomposition branches.
 - **NO** → Acceptance criterion on the relevant Implementation epic. Implementation proceeds the same way regardless; failure = fix-and-retry.
+
+Multiple independent unknowns can produce multiple Investigation epics, even for the same component and team. The component/team boundary rule applies to Implementations (bundling work for a team), not Investigations (resolving a specific unknown). However, if two qualifying unknowns would be resolved by the same experiment producing the same deliverable, combine them into one Investigation — don't split for the sake of splitting.
 
 ## Step 4: Map HLRs to Epics
 
