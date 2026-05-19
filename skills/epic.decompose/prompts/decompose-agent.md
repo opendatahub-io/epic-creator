@@ -83,42 +83,41 @@ Apply these rules to construct edges between epics:
 ### Epic Boundary Rules
 1. Different component OR different team → separate epics
 2. Same component + same team + same logical change → single epic
-3. Single epic estimated >2 weeks → consider splitting by sub-deliverable
 
 ### Investigation Edges
-4. Investigation determines scope/existence of downstream work → blocking edge to all affected Implementations. Bounded outcomes (≤3): conditional branches. Unbounded: phased decomposition.
-5. Investigation is informational only (doesn't change what gets built) → no blocking edge, parallel with all epics
+3. Investigation determines scope/existence of downstream work → blocking edge to all affected Implementations. Bounded outcomes (≤3): conditional branches. Unbounded: phased decomposition.
+4. Investigation is informational only (doesn't change what gets built) → no blocking edge, parallel with all epics
 
 ### Implementation Type Ordering
-6. `repo-onboarding` → `konflux-onboarding` always serial (pipeline needs repo)
-7. `repo-onboarding` → general implementation of onboarded component always serial (code needs repo). Doesn't block other repos.
-8. `license-validation` ∥ `repo-onboarding` parallel (independent inputs)
-9. `license-validation` ∥ `konflux-onboarding` parallel (config doesn't depend on specific deps)
-10. `license-validation` → general implementation serial (if licenses fail, deps change, affects approach)
-11. `konflux-onboarding` ∥ general implementation parallel (config independent of code; AC gates first execution)
-12. `docs-authoring` blocked by ALL Implementation epics in strategy (always last; docs describe what was built)
+5. `repo-onboarding` → `konflux-onboarding` always serial (pipeline needs repo)
+6. `repo-onboarding` → general implementation of onboarded component always serial (code needs repo). Doesn't block other repos.
+7. `license-validation` ∥ `repo-onboarding` parallel (independent inputs)
+8. `license-validation` ∥ `konflux-onboarding` parallel (config doesn't depend on specific deps)
+9. `license-validation` → general implementation serial (if licenses fail, deps change, affects approach)
+10. `konflux-onboarding` ∥ general implementation parallel (config independent of code; AC gates first execution)
+11. `docs-authoring` blocked by ALL Implementation epics in strategy (always last; docs describe what was built)
 
 ### Implementation → Implementation Edges
-13. Framework/library → consumer Implementations always serial (consumers build against framework)
-14. Implementation producing artifact another epic's code builds against (API, CRD, library) → consuming Implementation serial. Does NOT apply to configuration references (image digests, endpoint URLs) — those are AC gates.
-15. Implementations in different repos, no shared artifacts → parallel
-16. Implementations in same repo, different areas → parallel (merge conflicts = coordination risk, not dependency)
+12. Framework/library → consumer Implementations always serial (consumers build against framework)
+13. Implementation producing artifact another epic's code builds against (API, CRD, library) → consuming Implementation serial. Does NOT apply to configuration references (image digests, endpoint URLs) — those are AC gates.
+14. Implementations in different repos, no shared artifacts → parallel
+15. Implementations in same repo, different areas → parallel (merge conflicts = coordination risk, not dependency)
 
 ### External Dependency Edges
-17. External dependency Implementation (upstream PR/RFC) → Tier 2 Implementations always serial (gated by acceptance)
-18. External dependency Implementation ∥ Tier 1 Implementations always parallel (Tier 1 delivers independent partial value)
-19. External dependency with uncertain timing → always evaluate for tiered delivery (see Step 5.5)
+16. External dependency Implementation (upstream PR/RFC) → Tier 2 Implementations always serial (gated by acceptance)
+17. External dependency Implementation ∥ Tier 1 Implementations always parallel (Tier 1 delivers independent partial value)
+18. External dependency with uncertain timing → always evaluate for tiered delivery (see Step 5.5)
 
 ### Epic Generation Rules
-20. Safety-critical strategy (guardrails, sandboxing, RBAC) → generate fail-mode Investigation + security Investigation, both blocking main Implementation
-21. New component not in architecture context → generate onboarding chain: `repo-onboarding` + `license-validation` (parallel start) → `konflux-onboarding` (after repo-onboarding) → general implementation (after license-validation; parallel with konflux-onboarding). For new container image in existing repo: skip repo-onboarding, start with image build Implementation + `konflux-onboarding` (parallel).
-22. External community dependency where team submits PR/RFC and acceptance gates downstream → generate upstream Implementation epic, evaluate tiered delivery. If viable fallback exists (cherry-pick, fork) → note as AC, not separate epic. If third party resolves → model as precondition with tiered delivery, no separate epic.
-23. Infrastructure not in platform inventory → generate validation Investigation (does it exist/work?) + provisioning Implementation
+19. Safety-critical strategy (guardrails, sandboxing, RBAC) → generate fail-mode Investigation + security Investigation, both blocking main Implementation
+20. New component not in architecture context → generate onboarding chain: `repo-onboarding` + `license-validation` (parallel start) → `konflux-onboarding` (after repo-onboarding) → general implementation (after license-validation; parallel with konflux-onboarding). For new container image in existing repo: skip repo-onboarding, start with image build Implementation + `konflux-onboarding` (parallel).
+21. External community dependency where team submits PR/RFC and acceptance gates downstream → generate upstream Implementation epic, evaluate tiered delivery. If viable fallback exists (cherry-pick, fork) → note as AC, not separate epic. If third party resolves → model as precondition with tiered delivery, no separate epic.
+22. Infrastructure not in platform inventory → generate validation Investigation (does it exist/work?) + provisioning Implementation
 
 ### Acceptance Criteria Rules
-24. Strategy replaces existing capability → add rollback/feature-flag AC to replacing Implementation epic
-25. `docs-authoring` epic → add "technically reviewed against implementation" AC
-26. Implementation with `konflux-onboarding` in dependency chain → add "build pipeline green" AC
+23. Strategy replaces existing capability → add rollback/feature-flag AC to replacing Implementation epic
+24. `docs-authoring` epic → add "technically reviewed against implementation" AC
+25. Implementation with `konflux-onboarding` in dependency chain → add "build pipeline green" AC
 
 ## Step 5.5: Detect Tiered Delivery
 
@@ -189,7 +188,7 @@ Each epic gets acceptance criteria derived from:
 - Strategy acceptance criteria allocated to this epic's scope
 - HLRs mapped to this epic
 - Implementation-specific requirements (build pipeline green, rollback plan, doc review, etc.)
-- Rules 24-26 from Step 5
+- Rules 23-25 from Step 5
 
 ## Step 8: Generate Artifacts
 
