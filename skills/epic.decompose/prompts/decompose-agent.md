@@ -57,7 +57,9 @@ For each (component, change, owner team) tuple from the Affected Components tabl
 
 ## Step 3: Identify Investigation Epics
 
-For each question, decision, or uncertainty in the strategy:
+First, systematically scan the strategy for all unknowns — check the open questions table, risks table, assumptions, pending reviews, and conditional ADRs. Do not rely on the technical approach section alone; open questions are often in tables at the end of the strategy and may contradict or qualify the detailed technical description.
+
+For each question, decision, or uncertainty found:
 
 **Decision rule: Does the answer change which downstream epics exist or what they do?**
 
