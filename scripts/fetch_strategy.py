@@ -8,6 +8,7 @@ Usage:
 
 import os
 import sys
+import urllib.parse
 
 sys.path.insert(0, os.path.dirname(__file__))
 from jira_utils import require_env, get_issue, api_call_with_retry, adf_to_markdown
@@ -72,15 +73,17 @@ def _write_strategy(issue_data, output_dir="artifacts/strat-tasks"):
 
 
 def _search_issues(server, user, token, jql, limit=100):
-    """Search for issues using JQL with pagination."""
-    start = 0
+    """Search for issues using JQL with pagination via /search/jql."""
     all_issues = []
     fields = "summary,description,labels,issuelinks,status,priority"
+    next_page_token = None
 
-    while start < limit:
-        batch_size = min(50, limit - start)
-        path = (f"/search?jql={jql}&startAt={start}"
+    while len(all_issues) < limit:
+        batch_size = min(50, limit - len(all_issues))
+        path = (f"/search/jql?jql={urllib.parse.quote(jql, safe='')}"
                 f"&maxResults={batch_size}&fields={fields}")
+        if next_page_token:
+            path += f"&nextPageToken={urllib.parse.quote(next_page_token, safe='')}"
         data = api_call_with_retry(server, path, user, token)
 
         issues = data.get("issues", [])
@@ -88,8 +91,11 @@ def _search_issues(server, user, token, jql, limit=100):
             break
 
         all_issues.extend(issues)
-        start += len(issues)
-        if start >= data.get("total", 0):
+
+        if data.get("isLast", True):
+            break
+        next_page_token = data.get("nextPageToken")
+        if not next_page_token:
             break
 
     return all_issues
