@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Pipeline state machine for the thin dispatcher.
 
-Phase tracking, config, and transition logic for epic.decompose.
+Phase tracking, config, and transition logic for epic-decompose.
 
 Usage:
     python3 scripts/pipeline_state.py init [--batch-size N] [--headless]
@@ -65,28 +65,28 @@ PHASE_CONFIG = {
     "BATCH_START": {"type": "noop"},
     "FETCH": {
         "type": "agent",
-        "prompt": "skills/epic.decompose/prompts/fetch-agent.md",
+        "prompt": "skills/epic-decompose/prompts/fetch-agent.md",
         "ids_file": "tmp/pipeline-active-ids.txt",
         "poll_phase": "fetch",
         "vars": {"ID": "{ID}"},
     },
     "DECOMPOSE": {
         "type": "agent",
-        "prompt": "skills/epic.decompose/prompts/decompose-agent.md",
+        "prompt": "skills/epic-decompose/prompts/decompose-agent.md",
         "ids_file": "tmp/pipeline-active-ids.txt",
         "poll_phase": "decompose",
         "vars": {"ID": "{ID}"},
     },
     "REVIEW_DECOMP": {
         "type": "agent",
-        "prompt": "skills/epic.decompose/prompts/review-agent.md",
+        "prompt": "skills/epic-decompose/prompts/review-agent.md",
         "ids_file": "tmp/pipeline-active-ids.txt",
         "poll_phase": "review_decomp",
         "vars": {"ID": "{ID}"},
     },
     "REVISE_DECOMP": {
         "type": "agent",
-        "prompt": "skills/epic.decompose/prompts/revise-agent.md",
+        "prompt": "skills/epic-decompose/prompts/revise-agent.md",
         "ids_file": "tmp/pipeline-active-ids.txt",
         "poll_phase": "revise_decomp",
         "vars": {"ID": "{ID}"},
@@ -94,7 +94,7 @@ PHASE_CONFIG = {
     "RE_REVIEW_CHECK": {"type": "noop"},
     "RE_REVIEW": {
         "type": "agent",
-        "prompt": "skills/epic.decompose/prompts/review-agent.md",
+        "prompt": "skills/epic-decompose/prompts/review-agent.md",
         "ids_file": "tmp/pipeline-revise-ids.txt",
         "poll_phase": "review_decomp",
         "vars": {"ID": "{ID}"},
@@ -102,7 +102,7 @@ PHASE_CONFIG = {
     "REVISE_CHECK": {"type": "noop"},
     "RE_REVISE": {
         "type": "agent",
-        "prompt": "skills/epic.decompose/prompts/revise-agent.md",
+        "prompt": "skills/epic-decompose/prompts/revise-agent.md",
         "ids_file": "tmp/pipeline-revise-ids.txt",
         "poll_phase": "revise_decomp",
         "vars": {"ID": "{ID}"},
@@ -804,7 +804,7 @@ def cmd_dispatch_context(args):
     if phase not in PHASES:
         print(f"[PIPELINE STATE RECOVERY] Setup in progress (phase: {phase})")
         print("Setup is not yet complete. Re-read SKILL.md"
-              " (skills/epic.decompose/SKILL.md) and resume"
+              " (skills/epic-decompose/SKILL.md) and resume"
               " the setup steps from where you left off.")
         return
     if phase == "DONE":

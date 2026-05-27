@@ -1,5 +1,5 @@
 ---
-name: epic.decompose
+name: epic-decompose
 description: Decompose batches of RHAISTRAT strategies into implementation epic DAGs. Accepts explicit IDs or a JQL query. Non-interactive.
 user-invocable: true
 allowed-tools: Glob, Bash, Agent
@@ -104,7 +104,7 @@ action: launch_wave
 phase: DECOMPOSE
 message: "DECOMPOSE: wave 1/2 (5 IDs)"
 agents:
-  - prompt_file: skills/epic.decompose/prompts/decompose-agent.md
+  - prompt_file: skills/epic-decompose/prompts/decompose-agent.md
     vars: |
       ID=RHAISTRAT-1234
 ```
