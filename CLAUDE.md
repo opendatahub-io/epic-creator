@@ -52,7 +52,6 @@ python3 scripts/state.py read <file>                  # Print file contents
 python3 scripts/state.py write-ids <file> ID ...      # Write ID list (one per line, deduped)
 python3 scripts/state.py read-ids <file>              # Print IDs space-separated
 python3 scripts/state.py timestamp                    # Print current UTC time (ISO 8601)
-python3 scripts/state.py clean                        # Reset tmp/ directory
 ```
 
 ## Jira Integration

@@ -22,9 +22,6 @@ Usage:
 
     # Print current UTC timestamp (ISO 8601)
     python3 scripts/state.py timestamp
-
-    # Clean tmp/ directory
-    python3 scripts/state.py clean
 """
 import os
 import sys
@@ -147,14 +144,6 @@ def cmd_timestamp(args):
     print(datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))
 
 
-def cmd_clean(args):
-    """Remove and recreate tmp/. Only call from top-level entry points."""
-    import shutil
-    if os.path.exists("tmp"):
-        shutil.rmtree("tmp")
-    os.makedirs("tmp", exist_ok=True)
-
-
 def _parse_pairs(args):
     """Parse key=value arguments into (key, value) tuples."""
     pairs = []
@@ -175,7 +164,6 @@ COMMANDS = {
     "write-ids": cmd_write_ids,
     "read-ids": cmd_read_ids,
     "timestamp": cmd_timestamp,
-    "clean": cmd_clean,
 }
 
 if __name__ == "__main__":
