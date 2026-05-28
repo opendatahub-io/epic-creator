@@ -21,6 +21,8 @@ Epic files: artifacts/epic-tasks/{ID}-E*.md
 
 **Only fix issues the reviewer identified.** If a criterion scored full points, don't touch it. Never rewrite the entire decomposition from scratch.
 
+If the review passed all criteria with no issues to fix, skip to Step 3.
+
 For each issue in the review's `issues` list, apply the appropriate correction:
 
 ### HLR Coverage issues
@@ -55,15 +57,24 @@ For each issue in the review's `issues` list, apply the appropriate correction:
 
 ## Step 3: Update Decomposition Summary
 
-After all corrections are applied:
+If no corrections were needed (review passed with no issues):
+
+```bash
+python3 scripts/frontmatter.py set artifacts/epic-tasks/{ID}-decomposition.md revised=false
+```
+
+Skip the remaining updates — nothing changed.
+
+If corrections were applied:
 
 1. Update the **Epic List** table to reflect any added, removed, or modified epics
 2. Update the **Dependency DAG** diagram
 3. Update the **HLR Traceability Matrix** if HLR mappings changed
 4. Update frontmatter:
-   - Set `revised: true`
-   - Update `epic_count` to the current total
-   - Update `critical_path_length` to the current longest chain
+
+```bash
+python3 scripts/frontmatter.py set artifacts/epic-tasks/{ID}-decomposition.md revised=true epic_count=<N> critical_path_length=<N>
+```
 
 ## Step 4: Verify Consistency
 
@@ -73,4 +84,4 @@ Before finishing, verify:
 - Every epic referenced in `dependencies` lists actually exists as a file
 - `epic_count` in the summary matches the actual number of epic files
 
-Do not return a summary. Your work is complete when all epic files and the decomposition summary are updated with `revised: true` in the summary frontmatter.
+Do not return a summary. Your work is complete when you have run `frontmatter.py set` with `revised=true` (changes made) or `revised=false` (no corrections needed). The pipeline uses this field to detect that the revision agent has finished.
