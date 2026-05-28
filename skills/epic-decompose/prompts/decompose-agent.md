@@ -85,8 +85,8 @@ Apply these rules to construct edges between epics:
 2. Same component + same team + same logical change → single epic
 
 ### Investigation Edges
-3. Investigation determines scope/existence of downstream work → blocking edge to all affected Implementations. Bounded outcomes (≤3): conditional branches. Unbounded: phased decomposition.
-4. Investigation is informational only (doesn't change what gets built) → no blocking edge, parallel with all epics
+3. Investigation determines scope/existence of downstream work → blocking edge to all affected Implementations. Every downstream epic that depends on an Investigation must set `gated_by` and `gate_failure_impact` — by definition, the Investigation outcome changes what the epic looks like. Use `action: remove` when the epic may not exist (conditional branches), `action: rewrite` when the epic's scope/approach changes, `action: add_remediation` when the investigation may reveal a problem requiring additional work. Bounded outcomes (≤3): conditional branches. Unbounded: phased decomposition.
+4. Investigation is informational only (doesn't change what gets built) → not a true Investigation. Reclassify as an acceptance criterion on the relevant Implementation epic, or as an Implementation that produces a deliverable.
 
 ### Implementation Type Ordering
 5. `repo-onboarding` → `konflux-onboarding` always serial (pipeline needs repo)
