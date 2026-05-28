@@ -29,16 +29,18 @@ python3 scripts/frontmatter.py set artifacts/epic-reviews/{ID}-decomp-review.md 
 Evaluate the decomposition against these 8 criteria. For each, note specific issues found with severity:
 
 - **Critical**: Structural defect — circular DAG, P0 HLR unmapped, epic type fundamentally wrong, missing decomposition summary
-- **Major**: Rule violation or factual error — missing rule-mandated AC (rules 24-26), frontmatter field contradicts summary table, wrong team/component assignment, unjustified blocking edge that serializes parallel work, AI implementability score contradicts signals
+- **Major**: Rule violation or factual error — missing rule-mandated AC (rules 24-26), frontmatter field contradicts summary table, wrong team/component assignment, unjustified blocking edge that serializes parallel work, AI implementability score contradicts signals, priority inheritance violation (higher-priority epic blocked by lower-priority epic), missing DAG edge required by a numbered rule
 - **Minor**: Style or completeness nit — could be more explicit but doesn't cause incorrect execution (e.g., a "should" NFR not explicitly addressed, slightly imprecise component name)
+
+**Severity is determined by the type of issue, not by whether a justification exists.** A priority inheritance violation is major even if the dependency follows a construction rule — the rule application created an incorrect priority assignment. A missing rule-mandated edge is major even if execution order happens to be unaffected by other transitive paths. Do not downgrade severity based on mitigating circumstances; instead, note the mitigation in the issue description so the revise agent can decide whether to fix it or document the trade-off.
 
 ### Criterion 1: HLR Coverage (0-2 points)
 
 - **2**: Every P0 and P1 HLR maps to at least one epic. P2 HLRs covered or explicitly deferred with justification.
-- **1**: All P0 HLRs covered but gaps in P1 coverage, or priority inheritance errors (prerequisite epic has lower priority than work it enables).
+- **1**: All P0 HLRs covered but gaps in P1 coverage, or priority inheritance errors (prerequisite epic has lower priority than work it enables). Any priority inheritance violation is a **major** issue regardless of whether the dependency follows a construction rule.
 - **0**: P0 HLR(s) missing from epic set, or traceability matrix absent.
 
-Check: Read the strategy's HLR list. For each HLR, verify it appears in at least one epic's "HLR Traceability" section. Verify priority inheritance — an epic blocking all P0 work must be P0. Check for priority collapse — if an epic maps to HLRs at multiple priority levels and the lower-priority HLRs are distinct deferrable features (not incidental polish on the P0 work), they should be in separate epics so they can be planned independently.
+Check: Read the strategy's HLR list. For each HLR, verify it appears in at least one epic's "HLR Traceability" section. Verify priority inheritance — an epic blocking all P0 work must be P0. A P0 epic that depends on a P1 or P2 epic is a priority inheritance violation (major) — the lower-priority epic's priority must be raised, or the dependency must be removed. Check for priority collapse — if an epic maps to HLRs at multiple priority levels and the lower-priority HLRs are distinct deferrable features (not incidental polish on the P0 work), they should be in separate epics so they can be planned independently.
 
 ### Criterion 2: DAG Coherence (0-2 points)
 
@@ -46,7 +48,7 @@ Check: Read the strategy's HLR list. For each HLR, verify it appears in at least
 - **1**: Minor issues — an unjustified blocking edge that doesn't materially affect execution order, or critical path slightly longer than expected.
 - **0**: Circular dependency detected, or multiple unjustified blocking edges that would serialize naturally-parallel work.
 
-Check: Trace the dependency graph. Verify each edge against the DAG construction rules (boundary rules 1-3, investigation edges 4-5, implementation type ordering 6-12, implementation edges 13-16, external dependency edges 17-19, generation rules 20-23, AC rules 24-26). Check that parallel-eligible work (different repos, no shared artifacts) is not unnecessarily serialized. Verify critical path length against strategy size heuristics (S: 1-2, M standard: 3-4, M with new component: 4-5, L: 5-7).
+Check: Trace the dependency graph. Verify each edge against the DAG construction rules (boundary rules 1-3, investigation edges 4-5, implementation type ordering 6-12, implementation edges 13-16, external dependency edges 17-19, generation rules 20-23, AC rules 24-26). A missing edge required by a numbered rule is a **major** issue even if transitive paths happen to enforce the same ordering — tooling and humans read direct dependencies, not transitive closures. Check that parallel-eligible work (different repos, no shared artifacts) is not unnecessarily serialized. Verify critical path length against strategy size heuristics (S: 1-2, M standard: 3-4, M with new component: 4-5, L: 5-7).
 
 ### Criterion 3: Epic Boundaries (0-1 point)
 
