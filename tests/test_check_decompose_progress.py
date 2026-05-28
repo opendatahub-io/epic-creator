@@ -86,6 +86,68 @@ class TestCheckId:
             assert check_id("review_decomp", "RHAISTRAT-1") == "error"
 
 
+class TestDecomposePhase:
+    """Tests for the decompose phase — waits for all epic files, not just summary."""
+
+    def test_summary_only_is_pending(self, tmp_path):
+        """Summary exists but no epic files yet -> pending."""
+        f = tmp_path / "RHAISTRAT-1-decomposition.md"
+        f.write_text("---\nepic_count: 5\n---\nBody\n")
+        with patch.dict(
+            "check_decompose_progress.PHASE_CHECKS",
+            {"decompose": lambda id: str(tmp_path / f"{id}-decomposition.md")},
+        ), patch("check_decompose_progress._count_epic_files", return_value=0):
+            assert check_id("decompose", "RHAISTRAT-1") == "pending"
+
+    def test_partial_files_is_pending(self, tmp_path):
+        """Summary + some epic files but not all -> pending."""
+        f = tmp_path / "RHAISTRAT-1-decomposition.md"
+        f.write_text("---\nepic_count: 5\n---\nBody\n")
+        with patch.dict(
+            "check_decompose_progress.PHASE_CHECKS",
+            {"decompose": lambda id: str(tmp_path / f"{id}-decomposition.md")},
+        ), patch("check_decompose_progress._count_epic_files", return_value=3):
+            assert check_id("decompose", "RHAISTRAT-1") == "pending"
+
+    def test_all_files_is_completed(self, tmp_path):
+        """Summary + all epic files -> completed."""
+        f = tmp_path / "RHAISTRAT-1-decomposition.md"
+        f.write_text("---\nepic_count: 5\n---\nBody\n")
+        with patch.dict(
+            "check_decompose_progress.PHASE_CHECKS",
+            {"decompose": lambda id: str(tmp_path / f"{id}-decomposition.md")},
+        ), patch("check_decompose_progress._count_epic_files", return_value=5):
+            assert check_id("decompose", "RHAISTRAT-1") == "completed"
+
+    def test_extra_branch_files_is_completed(self, tmp_path):
+        """More files than epic_count (BRANCH files) -> completed."""
+        f = tmp_path / "RHAISTRAT-1-decomposition.md"
+        f.write_text("---\nepic_count: 5\n---\nBody\n")
+        with patch.dict(
+            "check_decompose_progress.PHASE_CHECKS",
+            {"decompose": lambda id: str(tmp_path / f"{id}-decomposition.md")},
+        ), patch("check_decompose_progress._count_epic_files", return_value=8):
+            assert check_id("decompose", "RHAISTRAT-1") == "completed"
+
+    def test_missing_summary_is_pending(self, tmp_path):
+        """No summary file at all -> pending."""
+        with patch.dict(
+            "check_decompose_progress.PHASE_CHECKS",
+            {"decompose": lambda id: str(tmp_path / f"{id}-decomposition.md")},
+        ):
+            assert check_id("decompose", "RHAISTRAT-1") == "pending"
+
+    def test_no_epic_count_is_pending(self, tmp_path):
+        """Summary without epic_count -> pending."""
+        f = tmp_path / "RHAISTRAT-1-decomposition.md"
+        f.write_text("---\nparent_strat: RHAISTRAT-1\n---\nBody\n")
+        with patch.dict(
+            "check_decompose_progress.PHASE_CHECKS",
+            {"decompose": lambda id: str(tmp_path / f"{id}-decomposition.md")},
+        ):
+            assert check_id("decompose", "RHAISTRAT-1") == "pending"
+
+
 class TestReviseDecompPhase:
     """Tests for the revise_decomp phase — the revised flag fix."""
 
