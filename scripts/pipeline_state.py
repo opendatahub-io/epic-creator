@@ -161,11 +161,16 @@ def _copy_ids(src, dst):
 
 
 def _reset_revised_flag(decomp_path):
-    """Reset revised: true → false in decomposition frontmatter."""
+    """Remove ``revised`` key from decomposition frontmatter.
+
+    The revise_decomp completion poller treats *any* non-None value
+    (including False) as "completed".  Removing the key forces it back to
+    "pending" so the revise agent is actually launched.
+    """
     from artifact_utils import read_frontmatter
     data, body = read_frontmatter(decomp_path)
-    if data and data.get("revised"):
-        data["revised"] = False
+    if data and "revised" in data:
+        del data["revised"]
         with open(decomp_path, "w") as f:
             f.write("---\n")
             f.write(yaml.dump(data, default_flow_style=False, sort_keys=False))
@@ -224,8 +229,16 @@ def advance(state, dry_run=False):
             _compute_ai_scores("tmp/pipeline-active-ids.txt")
         return nxt, f"{phase} → {nxt}"
 
-    # --- REVIEW_DECOMP → REVISE_DECOMP (always revise on first pass) ---
+    # --- REVIEW_DECOMP → REVISE_DECOMP (unconditional first revision) ---
     if phase == "REVIEW_DECOMP":
+        if not dry_run:
+            # Clear the ``revised`` default so the poller sees IDs as pending.
+            # The schema sets revised: false on creation, but the poller
+            # treats any non-None value as "completed".
+            for strat_id in _read_ids("tmp/pipeline-active-ids.txt"):
+                decomp = f"artifacts/epic-tasks/{strat_id}-decomposition.md"
+                if os.path.exists(decomp):
+                    _reset_revised_flag(decomp)
         return "REVISE_DECOMP", "REVIEW_DECOMP → REVISE_DECOMP: first revision (unconditional)"
 
     # --- REVISE_DECOMP → RE_REVIEW_CHECK ---
