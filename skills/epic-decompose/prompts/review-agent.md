@@ -16,7 +16,13 @@ Output: artifacts/epic-reviews/{ID}-decomp-review.md
 2. Read the decomposition summary
 3. Read all epic files matching `artifacts/epic-tasks/{ID}-E*.md`
 
-If the decomposition summary does not exist, write the review file with `error: "decomposition summary missing"` and stop.
+If the decomposition summary does not exist, create the review file with an error and stop:
+
+```bash
+python3 scripts/frontmatter.py set artifacts/epic-reviews/{ID}-decomp-review.md \
+    strat_id="{ID}" score=0 pass=false recommendation=revise \
+    error="decomposition summary missing"
+```
 
 ## Step 2: Review Against Quality Criteria
 
@@ -93,35 +99,14 @@ If the decomposition has fundamental structural problems (circular DAG, majority
 
 ## Step 4: Write Review File
 
-Write `artifacts/epic-reviews/{ID}-decomp-review.md` with this structure:
+Write `artifacts/epic-reviews/{ID}-decomp-review.md` in two steps:
 
-**Frontmatter:**
-
-```yaml
----
-strat_id: "{ID}"
-score: 8
-pass: true
-recommendation: "accept"
-issues:
-  - severity: "minor"
-    criterion: "DAG Coherence"
-    description: "E003→E004 edge not justified by shared artifact"
-  - severity: "major"
-    criterion: "HLR Coverage"
-    description: "P1 HLR 'offline inference' not mapped to any epic"
-error: null
----
-```
-
-The `issues` list must include every issue found, each with `severity` (critical/major/minor), `criterion` (which of the 8), and `description` (specific, actionable).
-
-**Body:**
+1. Write the body content (no frontmatter delimiters):
 
 ```markdown
 ## Review Summary
 
-Score: X/10 — [pass/fail]
+Score: X/9 — [pass/fail]
 Recommendation: [accept/revise]
 
 ## Criterion Details
@@ -147,5 +132,15 @@ Recommendation: [accept/revise]
 ### 7. Completeness (X/1)
 <findings>
 ```
+
+2. Set frontmatter via script. The `issues` list uses JSON format — each issue has `severity` (critical/major/minor), `criterion` (which of the 7), and `description` (specific, actionable):
+
+```bash
+python3 scripts/frontmatter.py set artifacts/epic-reviews/{ID}-decomp-review.md \
+    strat_id="{ID}" score=8 pass=true recommendation=accept \
+    'issues=[{"severity":"minor","criterion":"DAG Coherence","description":"E003-E004 edge not justified by shared artifact"}]'
+```
+
+For a passing review with no issues: `issues=[]`
 
 Do not return a summary. Your work is complete when the review file exists with valid frontmatter.

@@ -60,7 +60,13 @@ def _coerce_value(value_str, field_spec):
         return int(value_str)
 
     if field_type == "list":
-        if value_str.lower() in ("null", "none", "[]"):
+        if value_str.startswith("["):
+            import json
+            try:
+                return json.loads(value_str)
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Invalid JSON for list field: {e}")
+        if value_str.lower() in ("null", "none"):
             return None
         return [v.strip() for v in value_str.split(",") if v.strip()]
 

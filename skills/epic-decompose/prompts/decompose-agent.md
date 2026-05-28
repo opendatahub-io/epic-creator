@@ -196,23 +196,24 @@ Each epic gets acceptance criteria derived from:
 
 Write the decomposition summary **first** — this is the blueprint for all epic files.
 
-Write `artifacts/epic-tasks/{ID}-decomposition.md` with this frontmatter:
+Write `artifacts/epic-tasks/{ID}-decomposition.md` in two steps:
 
-```yaml
----
-parent_strat: "{ID}"
-epic_count: 5                    # total epics generated
-critical_path_length: 3          # longest chain in DAG
----
+1. Write the body content (no frontmatter delimiters) with these sections:
+   - **Epic List** (table: ID, title, type, team, priority)
+   - **Dependency DAG** (Mermaid diagram showing edges)
+   - **DAG Justification** (table: edge, rule, rationale)
+   - **HLR Traceability Matrix** (HLR → epic mapping, confirming full coverage)
+   - **Health Warnings** (priority inversions, scope traps — if any)
+   - **Tiered Delivery** (if applicable — Tier 1 vs Tier 2 split)
+
+2. Set frontmatter via script:
+
+```bash
+python3 scripts/frontmatter.py set artifacts/epic-tasks/{ID}-decomposition.md \
+    parent_strat="{ID}" epic_count=<N> critical_path_length=<N>
 ```
 
-Body sections for the summary:
-- **Epic List** (table: ID, title, type, team, priority)
-- **Dependency DAG** (Mermaid diagram showing edges)
-- **DAG Justification** (table: edge, rule, rationale)
-- **HLR Traceability Matrix** (HLR → epic mapping, confirming full coverage)
-- **Health Warnings** (priority inversions, scope traps — if any)
-- **Tiered Delivery** (if applicable — Tier 1 vs Tier 2 split)
+Add `triage=<value> triage_rationale="<reason>"` for triaged strategies (Step 0).
 
 ### Scope constraint: decompose, don't design
 
@@ -226,46 +227,38 @@ for the implementing team.
 
 Write one file per epic to `artifacts/epic-tasks/{ID}-ENNN.md` (e.g., `{ID}-E001.md`, `{ID}-E002.md`), following the decomposition summary as the plan. Each epic's `dependencies`, `priority`, `type`, and HLR mappings must match what the summary specifies.
 
-Each file must have this frontmatter:
+For each epic, write in two steps:
 
-```yaml
----
-epic_id: "{ID}-E001"
-parent_strat: "{ID}"
-component: "<component name>"
-team: "<owner team>"
-type: "Implementation"           # or "Investigation"
-implementation_type: null         # or docs-authoring, konflux-onboarding, license-validation, repo-onboarding
-priority: "P0"                   # P0, P1, or P2
-dependencies:                    # list of epic IDs this depends on
-  - "{ID}-E002"
-ai_signals:                      # individual signal evaluations (+1, 0, or -1)
-  change_specificity: 1
-  pattern_precedent: 1
-  adapter_pattern: 0
-  existing_foundation: 1
-  open_questions: -1
-  external_dependency: 0
-  human_process_gates: -1
-  repo_access: 1
-  architecture_claims: 1
-branch: null                     # for conditional decompositions
-gated_by: null                   # epic ID of gating investigation
-gate_failure_impact:
-  action: null                   # rewrite, remove, add_remediation, or null
-  fallback_approach: null
----
+1. Write the body content (no frontmatter delimiters) with these sections (minimum — add additional sections when the strategy contains relevant content for this epic's scope, e.g., risks, assumptions, open questions, stakeholder commitments):
+   - **Title** (one line)
+   - **Description** (what this epic delivers)
+   - **Scope** (specific changes in this epic)
+   - **Acceptance Criteria** (derived from strategy)
+   - **HLR Traceability** (which strategy HLRs this epic covers)
+   - **AI Implementability Signals** (which signals fired and rationale — do not include a total score line)
+
+2. Set frontmatter via script:
+
+```bash
+python3 scripts/frontmatter.py set artifacts/epic-tasks/{ID}-E001.md \
+    epic_id="{ID}-E001" parent_strat="{ID}" \
+    component="<component name>" team="<owner team>" \
+    type=Implementation priority=P0 \
+    dependencies="{ID}-E002,{ID}-E003" \
+    ai_signals.change_specificity=1 \
+    ai_signals.pattern_precedent=1 \
+    ai_signals.adapter_pattern=0 \
+    ai_signals.existing_foundation=1 \
+    ai_signals.open_questions=-1 \
+    ai_signals.external_dependency=0 \
+    ai_signals.human_process_gates=-1 \
+    ai_signals.repo_access=1 \
+    ai_signals.architecture_claims=1
 ```
 
-Do **not** include `ai_implementability` or `ai_implementability_score` in frontmatter — the pipeline computes those from `ai_signals` automatically.
+Add optional fields only when non-null: `implementation_type=<value>`, `branch=<value>`, `gated_by=<epic_id>`, `gate_failure_impact.action=<value> gate_failure_impact.fallback_approach="<text>"`.
 
-Body sections for each epic file (minimum — add additional sections when the strategy contains relevant content for this epic's scope, e.g., risks, assumptions, open questions, stakeholder commitments):
-- **Title** (one line)
-- **Description** (what this epic delivers)
-- **Scope** (specific changes in this epic)
-- **Acceptance Criteria** (derived from strategy)
-- **HLR Traceability** (which strategy HLRs this epic covers)
-- **AI Implementability Signals** (which signals fired and rationale — do not include a total score line)
+Do **not** include `ai_implementability` or `ai_implementability_score` — the pipeline computes those from `ai_signals` automatically.
 
 ### Step 8c: Verify consistency
 

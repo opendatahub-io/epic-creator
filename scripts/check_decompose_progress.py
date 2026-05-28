@@ -47,7 +47,9 @@ def check_id(phase, strat_id):
             return "error"
         if not data:
             return "error"
-        if data.get("revised"):
+        # revised can be true (changes made) or false (no changes needed).
+        # Either value means the agent finished. Only absent/None = pending.
+        if data.get("revised") is not None:
             return "completed"
         return "pending"
     return "completed"
