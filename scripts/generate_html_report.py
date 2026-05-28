@@ -412,9 +412,10 @@ CSS = '''
   .summary-table tr:hover { background: #f8f9fa; }
   .strat-link { color: var(--accent); text-decoration: none; font-weight: 600; font-family: 'SF Mono', SFMono-Regular, Consolas, monospace; font-size: 0.85rem; }
   .strat-link:hover { text-decoration: underline; }
-  .table-wrapper { position: relative; margin-bottom: 2rem; }
+  .table-section { position: relative; margin-bottom: 2rem; }
+  .table-wrapper { }
   .table-wrapper.collapsed { max-height: 500px; overflow: hidden; }
-  .table-fade { position: absolute; bottom: 30px; left: 0; right: 0; height: 60px; background: linear-gradient(transparent, var(--bg)); pointer-events: none; }
+  .table-fade { height: 60px; background: linear-gradient(transparent, var(--bg)); margin-top: -60px; position: relative; pointer-events: none; }
   .table-see-all { display: block; width: 100%; padding: 0.5rem; background: var(--card-bg); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-size: 0.85rem; color: var(--accent); text-align: center; }
   .table-see-all:hover { background: #e9ecef; }
   .back-to-top { position: fixed; bottom: 24px; right: 24px; background: var(--accent); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 1000; }
@@ -555,20 +556,22 @@ def build_report(strat_ids, start_time):
   </div>
 </div>
 
-<div class="table-wrapper{' collapsed' if total_strats > 20 else ''}">
-  <table class="summary-table">
-    <thead>
-      <tr>
-        <th>Strategy</th>
-        <th style="text-align:center;">Epics</th>
-        <th style="text-align:center;">Review</th>
-        <th>Issues</th>
-      </tr>
-    </thead>
-    <tbody>
-      {summary_rows}
-    </tbody>
-  </table>
+<div class="table-section">
+  <div class="table-wrapper{' collapsed' if total_strats > 20 else ''}">
+    <table class="summary-table">
+      <thead>
+        <tr>
+          <th>Strategy</th>
+          <th style="text-align:center;">Epics</th>
+          <th style="text-align:center;">Review</th>
+          <th>Issues</th>
+        </tr>
+      </thead>
+      <tbody>
+        {summary_rows}
+      </tbody>
+    </table>
+  </div>
   {f'<div class="table-fade"></div><button class="table-see-all" onclick="toggleTable(this)">See all {total_strats} strategies</button>' if total_strats > 20 else ''}
 </div>
 
@@ -601,10 +604,10 @@ window.addEventListener('scroll', function() {{
 }});
 
 function toggleTable(el) {{
-    var w = el.closest('.table-wrapper');
-    w.classList.remove('collapsed');
+    var section = el.closest('.table-section');
+    section.querySelector('.table-wrapper').classList.remove('collapsed');
+    section.querySelector('.table-fade').style.display = 'none';
     el.style.display = 'none';
-    w.querySelector('.table-fade').style.display = 'none';
 }}
 </script>
 </body>
