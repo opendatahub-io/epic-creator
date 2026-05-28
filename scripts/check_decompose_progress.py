@@ -6,6 +6,7 @@ to parse ``NEXT_POLL`` values.
 """
 
 import argparse
+import glob
 import os
 import sys
 import time
@@ -24,11 +25,35 @@ PHASE_CHECKS = {
 }
 
 
+def _count_epic_files(strat_id):
+    """Count epic files on disk for a strategy (includes BRANCH files)."""
+    pattern = f"artifacts/epic-tasks/{strat_id}-*E*.md"
+    return sum(1 for f in glob.glob(pattern)
+               if not f.endswith("-decomposition.md"))
+
+
 def check_id(phase, strat_id):
     """Check one ID. Returns 'completed', 'pending', or 'error'."""
     path = PHASE_CHECKS[phase](strat_id)
     if not os.path.exists(path):
         return "pending"
+    if phase == "decompose":
+        try:
+            data, _ = read_frontmatter(path)
+        except Exception:
+            return "pending"
+        if not data:
+            return "pending"
+        epic_count = data.get("epic_count")
+        if not epic_count:
+            return "pending"
+        # Wait until all epic files are written, not just the summary.
+        # The decompose agent writes the summary first, then individual
+        # epic files sequentially.  Without this check the poller can
+        # advance to REVIEW_DECOMP while files are still being written.
+        if _count_epic_files(strat_id) < epic_count:
+            return "pending"
+        return "completed"
     if phase == "review_decomp":
         try:
             data, _ = read_frontmatter(path)
