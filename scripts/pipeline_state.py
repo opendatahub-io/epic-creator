@@ -350,6 +350,8 @@ def advance(state, dry_run=False):
 
     # --- REPORT → DONE (with optional announce) ---
     if phase == "REPORT":
+        if not dry_run and state.get("announce_complete"):
+            _run_script("python3 scripts/finish.py")
         return "DONE", "REPORT → DONE"
 
     print(f"No transition defined for phase: {phase}", file=sys.stderr)
