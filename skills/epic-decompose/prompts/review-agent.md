@@ -60,7 +60,7 @@ Check: For each epic, verify component and team fields. Look for epics that bund
 - **1**: Investigation epics genuinely resolve uncertainty that changes downstream structure. Implementation epics produce artifacts. No misclassifications.
 - **0**: An epic typed as Investigation should be Implementation (or vice versa). Test: does the outcome of this "Investigation" actually change which downstream epics exist or what they do? If no, it should be an Implementation or an acceptance criterion.
 
-Check: For each Investigation epic, verify it has downstream epics that depend on its outcome. For each Implementation, verify it produces a concrete artifact. For every epic with a non-null `gated_by` field, verify `gate_failure_impact` has both `action` and `fallback_approach` populated — if nothing changes on gate failure, this is a scheduling dependency (belongs in `dependencies` only), not a true gate (major issue).
+Check: For each Investigation epic, verify it has downstream epics that depend on its outcome. For each Implementation, verify it produces a concrete artifact. For every epic with a non-null `gated_by` field, verify `gate_failure_impact` has both `action` and `fallback_approach` populated — if nothing changes on gate failure, this is a scheduling dependency (belongs in `dependencies` only), not a true gate (major issue). For every epic that lists an Investigation in `dependencies`, verify `gated_by` is set — an Investigation dependency without `gated_by` is a major issue because by definition the Investigation outcome changes the downstream epic's scope or existence.
 
 ### Criterion 5: AI Implementability Scoring (0-1 point)
 
