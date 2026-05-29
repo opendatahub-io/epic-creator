@@ -157,7 +157,7 @@ Evaluate each of the 9 signals below as +1 (favorable), 0 (neutral/N/A), or -1 (
 | 2 | Pattern precedent | `pattern_precedent` | Similar changes exist in same codebase | No precedent in codebase |
 | 3 | Adapter/plugin pattern | `adapter_pattern` | Follows existing reference implementation | N/A (0 if absent) |
 | 4 | Existing foundation | `existing_foundation` | Extending existing code/feature | Greenfield, no foundation |
-| 5 | Open questions | `open_questions` | 0 unresolved questions for this epic | ≥2 unresolved questions |
+| 5 | Open questions | `open_questions` | All design decisions resolved for this epic | Open questions that would change implementation approach |
 | 6 | External dependency | `external_dependency` | None | Upstream contribution or vendor coordination needed |
 | 7 | Human process gates | `human_process_gates` | None | Requires human approval step |
 | 8 | Repo access | `repo_access` | AI can clone and modify target repo | Repo inaccessible or special access required |
