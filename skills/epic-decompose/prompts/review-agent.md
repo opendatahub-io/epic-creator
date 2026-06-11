@@ -26,7 +26,7 @@ python3 scripts/frontmatter.py set artifacts/epic-reviews/{ID}-decomp-review.md 
 
 ## Step 2: Review Against Quality Criteria
 
-Evaluate the decomposition against these 8 criteria. For each, note specific issues found with severity:
+Evaluate the decomposition against these 7 criteria. For each, note specific issues found with severity:
 
 - **Critical**: Structural defect — circular DAG, P0 HLR unmapped, epic type fundamentally wrong, missing decomposition summary
 - **Major**: Rule violation or factual error — missing rule-mandated AC (rules 24-26), frontmatter field contradicts summary table, wrong team/component assignment, unjustified blocking edge that serializes parallel work, AI implementability score contradicts signals
@@ -48,54 +48,59 @@ Check: Read the strategy's HLR list. For each HLR, verify it appears in at least
 
 Check: Trace the dependency graph. Verify each edge against the DAG construction rules (boundary rules 1-3, investigation edges 4-5, implementation type ordering 6-12, implementation edges 13-16, external dependency edges 17-19, generation rules 20-23, AC rules 24-26). Check that parallel-eligible work (different repos, no shared artifacts) is not unnecessarily serialized. Note: Rule 11 edges (all implementations → `docs-authoring`) are valid DAG edges but do not trigger priority inheritance — do not flag them as unjustified serialization or priority inheritance violations. Verify critical path length against strategy size heuristics (S: 1-2, M standard: 3-4, M with new component: 4-5, L: 5-7).
 
-### Criterion 3: Epic Boundaries (0-1 point)
+### Criterion 3: Epic Boundaries (0-2 points)
 
-- **1**: Different component/team tuples produce separate epics. No single epic spans multiple components or teams (unless same logical change). No epic appears to exceed ~2 weeks of work.
-- **0**: Epics violate the component/team boundary rule, or an epic is clearly oversized.
+- **2**: Different component/team tuples produce separate epics. No single epic spans multiple components or teams (unless same logical change). No epic appears to exceed ~2 weeks of work.
+- **1**: One epic is slightly oversized but could be completed in a single sprint, or one boundary edge case (e.g., shared utility code attributed to one team when two teams contribute).
+- **0**: Epics violate the component/team boundary rule (work for different teams bundled into one epic), or an epic is clearly oversized (multiple sprints of work).
 
 Check: For each epic, verify component and team fields. Look for epics that bundle work across multiple components or teams.
 
-### Criterion 4: Type Correctness (0-1 point)
+### Criterion 4: Type Correctness (0-2 points)
 
-- **1**: Investigation epics genuinely resolve uncertainty that changes downstream structure. Implementation epics produce artifacts. No misclassifications.
+- **2**: Investigation epics genuinely resolve uncertainty that changes downstream structure. Implementation epics produce artifacts. No misclassifications. All `gated_by`/`gate_failure_impact` fields are correct.
+- **1**: Types are correct but gating metadata has issues — `gated_by` set without `gate_failure_impact`, or an Investigation dependency missing `gated_by` on a downstream epic.
 - **0**: An epic typed as Investigation should be Implementation (or vice versa). Test: does the outcome of this "Investigation" actually change which downstream epics exist or what they do? If no, it should be an Implementation or an acceptance criterion.
 
 Check: For each Investigation epic, verify it has downstream epics that depend on its outcome. For each Implementation, verify it produces a concrete artifact. For every epic with a non-null `gated_by` field, verify `gate_failure_impact` has both `action` and `fallback_approach` populated — if nothing changes on gate failure, this is a scheduling dependency (belongs in `dependencies` only), not a true gate (major issue). For every epic that lists an Investigation in `dependencies`, verify `gated_by` is set — an Investigation dependency without `gated_by` is a major issue because by definition the Investigation outcome changes the downstream epic's scope or existence.
 
-### Criterion 5: AI Implementability Scoring (0-1 point)
+### Criterion 5: AI Implementability Scoring (0-2 points)
 
-- **1**: Each signal's +1/0/-1 value in `ai_signals` frontmatter is consistent with the 9-signal rubric conditions and the strategy content. Signal rationales in the body are justified.
+- **2**: Each signal's +1/0/-1 value in `ai_signals` frontmatter is consistent with the 9-signal rubric conditions and the strategy content. Signal rationales in the body are justified.
+- **1**: Most signals are correct but 1-2 signals have arguable values (e.g., a borderline call on `existing_foundation` for a partially-greenfield epic), or signal rationales are present but thin.
 - **0**: Signal values contradict the rubric conditions (e.g., `open_questions: 1` but the epic has unresolved questions that would change implementation approach), or `ai_signals` is missing from frontmatter, or signal breakdown is missing from the body.
 
 Check: For each epic, verify the `ai_signals` values in frontmatter against the rubric conditions and strategy content. Cross-check that the body's signal rationales match the frontmatter values. Do **not** check arithmetic or thresholds — `ai_implementability` and `ai_implementability_score` are computed by the pipeline, not the decompose agent.
 
-### Criterion 6: Acceptance Criteria Quality (0-1 point)
+### Criterion 6: Acceptance Criteria Quality (0-2 points)
 
-- **1**: Each epic has testable acceptance criteria derived from the strategy. Rule-mandated ACs are present where applicable: rollback/feature-flag for replacements, doc review for docs-authoring, build pipeline green for konflux chain.
-- **0**: Epics have no ACs, or ACs are vague/untestable, or rule-mandated ACs are missing.
+- **2**: Each epic has testable acceptance criteria derived from the strategy. Rule-mandated ACs are present where applicable: rollback/feature-flag for replacements, doc review for docs-authoring, build pipeline green for konflux chain.
+- **1**: ACs are present and mostly testable, but one rule-mandated AC is missing or one epic has ACs that are slightly vague (could be made more specific).
+- **0**: Epics have no ACs, or ACs are vague/untestable across multiple epics, or multiple rule-mandated ACs are missing.
 
 Check: Verify each epic has ACs. Check that replacement epics have rollback/feature-flag ACs, docs-authoring has technical review AC, and konflux-chain epics have build pipeline AC.
 
-### Criterion 7: Completeness (0-1 point)
+### Criterion 7: Completeness (0-2 points)
 
-- **1**: All strategy scope is covered by the epic set. No acceptance criteria or capabilities from the strategy are unaccounted for. Conditional branches (if any) cover all bounded outcomes.
-- **0**: Strategy scope is missing from the epic set, or conditional branches don't cover all stated outcomes.
+- **2**: All strategy scope is covered by the epic set. No acceptance criteria or capabilities from the strategy are unaccounted for. Conditional branches (if any) cover all bounded outcomes.
+- **1**: Minor scope gap — a secondary capability or low-priority acceptance criterion is not explicitly covered, but the core scope is complete. Or conditional branches cover the primary outcome but not all edge cases.
+- **0**: Strategy scope is missing from the epic set (a primary capability or P0/P1 acceptance criterion has no corresponding epic), or conditional branches don't cover stated outcomes, or strategy-level context (risks, open questions) is silently dropped across multiple epics.
 
 Check: Compare the strategy's scope, acceptance criteria, and capabilities against the combined epic set. Look for gaps. Also check cross-epic consistency: when an upstream epic's scope covers multiple items (modules, components, APIs), verify that the downstream epic set collectively accounts for all of them — not silently dropped. Verify that strategy-level context relevant to an epic's scope (risks, assumptions, open questions, stakeholder commitments, etc.) is carried forward — not silently dropped.
 
 ## Step 3: Score and Decide
 
-Sum the points across all 7 criteria (max 9). When scoring each criterion, severity matters:
+Sum the points across all 7 criteria (max 14). When scoring each criterion, severity matters:
 
 - **Critical** issue in a criterion → score 0 for that criterion
-- **Major** issue in a criterion → lose at least 1 point (score the lower value in multi-point criteria, or 0 in single-point criteria)
+- **Major** issue in a criterion → lose at least 1 point (score 1/2 for that criterion)
 - **Minor** issues alone do not reduce the score, but 3+ minors in the same criterion costs 1 point
 
-Thresholds:
-- **Pass (score ≥ 6)**: Decomposition is acceptable. Recommendation: `accept`
-- **Fail (score < 6)**: Decomposition needs revision. Recommendation: `revise`
+**Auto-fail rule: Any criterion that scores 0 → `pass: false` regardless of total score.** A zero on any dimension means the decomposition is structurally broken on that dimension and must be revised.
 
-If the decomposition has fundamental structural problems (circular DAG, majority of HLRs unmapped), recommend `revise` regardless of score.
+Thresholds:
+- **Pass (score ≥ 10, AND no criterion at 0)**: Decomposition is acceptable. Recommendation: `accept`
+- **Fail (score < 10, OR any criterion at 0)**: Decomposition needs revision. Recommendation: `revise`
 
 ## Step 4: Write Review File
 
@@ -106,7 +111,7 @@ Write `artifacts/epic-reviews/{ID}-decomp-review.md` in two steps:
 ```markdown
 ## Review Summary
 
-Score: X/9 — [pass/fail]
+Score: X/14 — [pass/fail]
 Recommendation: [accept/revise]
 
 ## Criterion Details
@@ -117,19 +122,19 @@ Recommendation: [accept/revise]
 ### 2. DAG Coherence (X/2)
 <findings>
 
-### 3. Epic Boundaries (X/1)
+### 3. Epic Boundaries (X/2)
 <findings>
 
-### 4. Type Correctness (X/1)
+### 4. Type Correctness (X/2)
 <findings>
 
-### 5. AI Implementability Scoring (X/1)
+### 5. AI Implementability Scoring (X/2)
 <findings>
 
-### 6. Acceptance Criteria Quality (X/1)
+### 6. Acceptance Criteria Quality (X/2)
 <findings>
 
-### 7. Completeness (X/1)
+### 7. Completeness (X/2)
 <findings>
 ```
 
@@ -137,7 +142,7 @@ Recommendation: [accept/revise]
 
 ```bash
 python3 scripts/frontmatter.py set artifacts/epic-reviews/{ID}-decomp-review.md \
-    strat_id="{ID}" score=8 pass=true recommendation=accept \
+    strat_id="{ID}" score=13 pass=true recommendation=accept \
     'issues=[{"severity":"minor","criterion":"DAG Coherence","description":"E003-E004 edge not justified by shared artifact"}]'
 ```
 

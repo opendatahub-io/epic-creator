@@ -262,7 +262,7 @@ class TestSetJsonList:
         run_fm(
             "set", path,
             "strat_id=RHAISTRAT-1234",
-            "score=9",
+            "score=14",
             "pass=true",
             "recommendation=accept",
             "issues=[]",
