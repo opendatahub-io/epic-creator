@@ -8,21 +8,45 @@ Usage:
 
 import os
 import sys
+import urllib.error
 import urllib.parse
 
 sys.path.insert(0, os.path.dirname(__file__))
-from jira_utils import require_env, get_issue, api_call_with_retry, adf_to_markdown
+from jira_utils import (require_env, get_issue, api_call_with_retry,
+                        adf_to_markdown, download_attachment)
 
+import re
 import yaml
 
 
 def _fetch_issue(server, user, token, key):
     fields = ["summary", "description", "labels", "issuelinks", "status",
-              "priority"]
+              "priority", "attachment"]
     return get_issue(server, user, token, key, fields=fields)
 
 
-def _write_strategy(issue_data, output_dir="artifacts/strat-tasks"):
+def _find_strategy_attachment(attachments, key):
+    """Find the best strategy-content attachment from the attachment list.
+
+    Matches RHAISTRAT-NNNN-strategy.md.
+    When multiple exist (e.g. re-uploaded revisions), returns the most
+    recently created one.
+    Returns (filename, content_url, size) or None.
+    """
+    candidates = []
+    for a in (attachments or []):
+        fn = a.get("filename", "")
+        if re.match(r'^RHAISTRAT-\d+-strategy\.md$', fn):
+            candidates.append(a)
+    if not candidates:
+        return None
+    # Pick the most recently uploaded revision
+    best = max(candidates, key=lambda a: a.get("created", ""))
+    return best["filename"], best["content"], best.get("size", 0)
+
+
+def _write_strategy(issue_data, output_dir="artifacts/strat-tasks",
+                    server=None, user=None, token=None):
     key = issue_data["key"]
     fields = issue_data["fields"]
     title = fields.get("summary", "")
@@ -37,6 +61,26 @@ def _write_strategy(issue_data, output_dir="artifacts/strat-tasks"):
         description = str(desc_raw).strip()
     else:
         description = ""
+
+    # Check for strategy-content attachment (full strategy when description
+    # was truncated due to Jira's size limit)
+    attachment_source = None
+    attachments = fields.get("attachment", [])
+    attach_info = _find_strategy_attachment(attachments, key)
+    if attach_info and server and user and token:
+        attach_fn, attach_url, attach_size = attach_info
+        try:
+            attach_content = download_attachment(attach_url, user, token,
+                                                   server=server)
+            description = attach_content.decode("utf-8", errors="replace").strip()
+            attachment_source = attach_fn
+            print(f"  {key}: using attachment {attach_fn} "
+                  f"({attach_size // 1024}KB) as strategy body",
+                  file=sys.stderr)
+        except (urllib.error.HTTPError, urllib.error.URLError,
+                ValueError, UnicodeDecodeError) as e:
+            print(f"  {key}: WARNING: failed to download attachment "
+                  f"{attach_fn}: {e}", file=sys.stderr)
 
     links = []
     for link in fields.get("issuelinks", []):
@@ -60,6 +104,8 @@ def _write_strategy(issue_data, output_dir="artifacts/strat-tasks"):
         "labels": labels if labels else [],
         "links": links if links else [],
     }
+    if attachment_source:
+        frontmatter["attachment_source"] = attachment_source
 
     with open(path, "w") as f:
         f.write("---\n")
@@ -75,7 +121,7 @@ def _write_strategy(issue_data, output_dir="artifacts/strat-tasks"):
 def _search_issues(server, user, token, jql, limit=100):
     """Search for issues using JQL with pagination via /search/jql."""
     all_issues = []
-    fields = "summary,description,labels,issuelinks,status,priority"
+    fields = "summary,description,labels,issuelinks,status,priority,attachment"
     next_page_token = None
 
     while len(all_issues) < limit:
@@ -123,7 +169,7 @@ def cmd_fetch(args):
     all_keys = []
     for issue in issues:
         key = issue["key"]
-        _write_strategy(issue)
+        _write_strategy(issue, server=server, user=user, token=token)
         all_keys.append(key)
         print(f"Fetched {key}: {issue['fields'].get('summary', '')[:60]}",
               file=sys.stderr)
@@ -149,7 +195,7 @@ def cmd_fetch_one(args):
     issue = _fetch_issue(server, user, token, key)
     if not issue:
         sys.exit(1)
-    path = _write_strategy(issue)
+    path = _write_strategy(issue, server=server, user=user, token=token)
     print(path)
 
 

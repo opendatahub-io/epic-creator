@@ -100,6 +100,59 @@ def get_issue(server, user, token, key, fields=None):
     return api_call_with_retry(server, path, user, token)
 
 
+def download_attachment(url, user, token, server=None, max_bytes=1_048_576):
+    """Download attachment content by direct URL. Returns bytes.
+
+    Raises ValueError if the URL doesn't match the Jira server origin or
+    the response exceeds max_bytes (default 1 MB).
+    """
+    from urllib.parse import urlparse
+    parsed = urlparse(url)
+    if parsed.scheme != "https":
+        raise ValueError(f"Refused non-HTTPS URL scheme: {parsed.scheme!r}")
+    if server:
+        expected = urlparse(server).netloc.lower()
+        if parsed.netloc.lower() != expected:
+            raise ValueError(
+                f"Attachment URL host {parsed.netloc!r} does not match "
+                f"Jira server {expected!r}")
+    credentials = base64.b64encode(f"{user}:{token}".encode()).decode()
+    req = urllib.request.Request(url, headers={
+        "Authorization": f"Basic {credentials}",
+        "Accept": "*/*",
+        "X-Atlassian-Token": "no-check",
+    })
+    last_error = None
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                length = resp.headers.get("Content-Length")
+                if length and int(length) > max_bytes:
+                    raise ValueError(
+                        f"Attachment too large: {int(length)} bytes "
+                        f"(limit {max_bytes})")
+                data = resp.read(max_bytes + 1)
+                if len(data) > max_bytes:
+                    raise ValueError(
+                        f"Attachment too large: >{max_bytes} bytes")
+                return data
+        except urllib.error.HTTPError as e:
+            if e.code < 500 and e.code != 429:
+                raise  # 4xx errors are not transient
+            wait = 4 ** attempt
+            print(f"  Attachment download error: {e}, retrying in {wait}s...",
+                  file=sys.stderr)
+            time.sleep(wait)
+            last_error = e
+        except urllib.error.URLError as e:
+            wait = 4 ** attempt
+            print(f"  Attachment download error: {e}, retrying in {wait}s...",
+                  file=sys.stderr)
+            time.sleep(wait)
+            last_error = e
+    raise last_error
+
+
 def get_comments(server, user, token, issue_key):
     """GET all comments for an issue, handling pagination."""
     comments = []
