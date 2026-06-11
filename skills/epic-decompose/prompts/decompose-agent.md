@@ -75,6 +75,7 @@ Multiple independent unknowns can produce multiple Investigation epics, even for
 - Priority inheritance: prerequisite epic inherits the highest priority of all HLRs it transitively enables
 - An epic blocking all P0 work is implicitly P0
 - Priority split: when an epic maps to HLRs at multiple priority levels, check whether the lower-priority HLRs represent distinct, deferrable features (could be cut from a release without affecting the P0 deliverable). If yes, split them into separate epics by priority so each can be planned independently. If the lower-priority HLR is incidental to the P0 work (error handling, doc coverage, config override that falls out of the same implementation), keep it bundled.
+- `docs-authoring` priority exception: `docs-authoring` epics are exempt from priority inheritance. They do not push their priority upstream to the implementations they depend on. Instead, derive their priority from the strategy frontmatter `priority` field: Critical→P0, Major→P1, Normal/Minor/Undefined→P2. If the field is missing or empty, default to P2.
 
 ## Step 5: Build Dependency DAG
 
@@ -95,7 +96,7 @@ Apply these rules to construct edges between epics:
 8. `license-validation` ∥ `konflux-onboarding` parallel (config doesn't depend on specific deps)
 9. `license-validation` → general implementation serial (if licenses fail, deps change, affects approach)
 10. `konflux-onboarding` ∥ general implementation parallel (config independent of code; AC gates first execution)
-11. `docs-authoring` blocked by ALL Implementation epics in strategy (always last; docs describe what was built)
+11. `docs-authoring` blocked by ALL Implementation epics in strategy (always last; docs describe what was built). These edges do not trigger priority inheritance — see Step 4 `docs-authoring` priority exception.
 
 ### Implementation → Implementation Edges
 12. Framework/library → consumer Implementations always serial (consumers build against framework)
