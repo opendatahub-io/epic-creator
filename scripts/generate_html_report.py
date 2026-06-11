@@ -243,7 +243,7 @@ def render_strategy_section(strat_id):
     # Score bar (handle non-int gracefully)
     score_int = score if isinstance(score, int) else 0
     score_bar = ""
-    for i in range(9):
+    for i in range(14):
         cls = "score-filled" if i < score_int else "score-empty"
         score_bar += f'<div class="score-segment {cls}"></div>'
 
@@ -253,10 +253,10 @@ def render_strategy_section(strat_id):
         review_text = f"Error: {_html_escape(error)}"
     elif passed:
         review_color = "var(--high)"
-        review_text = f"{score}/9 Pass"
+        review_text = f"{score}/14 Pass"
     else:
         review_color = "var(--low)"
-        review_text = f"{score}/9 Fail"
+        review_text = f"{score}/14 Fail"
 
     issues_html = ""
     if issues:
@@ -309,7 +309,7 @@ def render_strategy_section(strat_id):
       <div class="stat-label">Critical Path</div>
     </div>
     <div class="stat-card">
-      <div class="stat-value" style="color:{review_color}">{score}/9</div>
+      <div class="stat-value" style="color:{review_color}">{score}/14</div>
       <div class="stat-label">Review Score</div>
       <div class="score-bar">{score_bar}</div>
     </div>
@@ -454,16 +454,16 @@ def build_report(strat_ids, start_time):
     minor_count = sum(1 for i in all_issues if i.get("severity") == "minor")
 
     # Score distribution for histogram
-    score_dist = [0] * 10  # 0-9
+    score_dist = [0] * 15  # 0-14
     for sc in scores:
-        if 0 <= sc <= 9:
+        if 0 <= sc <= 14:
             score_dist[sc] += 1
     max_count = max(score_dist) if score_dist else 1
     score_dist_bars = ""
     for i, count in enumerate(score_dist):
         height = int(count / max_count * 36) if max_count > 0 else 0
-        color = "var(--high)" if i >= 6 else "var(--low)"
-        label = f' title="{i}/9: {count}"' if count else f' title="{i}/9: 0"'
+        color = "var(--high)" if i >= 10 else "var(--low)"
+        label = f' title="{i}/14: {count}"' if count else f' title="{i}/14: 0"'
         score_dist_bars += (f'<div class="score-dist-bar" '
                             f'style="height:{max(height, 2)}px;background:{color};"'
                             f'{label}></div>')
@@ -480,9 +480,9 @@ def build_report(strat_ids, start_time):
         if s["error"]:
             status = '<span style="color:var(--low);font-weight:600;">Error</span>'
         elif s["passed"]:
-            status = f'<span style="color:var(--high);font-weight:600;">{sc}/9 Pass</span>'
+            status = f'<span style="color:var(--high);font-weight:600;">{sc}/14 Pass</span>'
         else:
-            status = f'<span style="color:var(--low);font-weight:600;">{sc}/9 Fail</span>'
+            status = f'<span style="color:var(--low);font-weight:600;">{sc}/14 Fail</span>'
         issue_cell = ""
         if n_issues:
             sev_counts = {}
@@ -526,7 +526,7 @@ def build_report(strat_ids, start_time):
 <body>
 
 <h1>Epic Decomposition Report</h1>
-<div class="subtitle">{display_time} &middot; {total_strats} strategies &middot; {total_epics} epics &middot; avg review {avg_score:.1f}/9</div>
+<div class="subtitle">{display_time} &middot; {total_strats} strategies &middot; {total_epics} epics &middot; avg review {avg_score:.1f}/14</div>
 
 <div class="overview-grid">
   <div class="overview-card">

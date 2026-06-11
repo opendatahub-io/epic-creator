@@ -56,7 +56,7 @@ def _setup_strategy(strat_id="RHAISTRAT-9999"):
     _write(f"artifacts/epic-reviews/{strat_id}-decomp-review.md",
            "## Review\n\nNo major issues.\n")
     _run_fm("set", f"artifacts/epic-reviews/{strat_id}-decomp-review.md",
-            f"strat_id={strat_id}", "score=8", "pass=true",
+            f"strat_id={strat_id}", "score=12", "pass=true",
             "recommendation=accept", "issues=[]")
 
     # Epic file
@@ -167,7 +167,7 @@ class TestHTMLReportContent:
         with open("test-report.html") as f:
             html = f.read()
 
-        assert "8/9" in html
+        assert "12/14" in html
         assert "Pass" in html
 
     def test_contains_mermaid_diagram(self, tmp_dir):
@@ -227,7 +227,7 @@ class TestHTMLReportWithReviewIssues:
              "description": "P1 HLR not mapped"},
         ])
         _run_fm("set", "artifacts/epic-reviews/RHAISTRAT-9999-decomp-review.md",
-                "score=6", "pass=false",
+                "score=8", "pass=false",
                 f"issues={issues_json}")
 
         _run_report(
