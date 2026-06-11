@@ -38,7 +38,7 @@ Evaluate the decomposition against these 8 criteria. For each, note specific iss
 - **1**: All P0 HLRs covered but gaps in P1 coverage, or priority inheritance errors (prerequisite epic has lower priority than work it enables).
 - **0**: P0 HLR(s) missing from epic set, or traceability matrix absent.
 
-Check: Read the strategy's HLR list. For each HLR, verify it appears in at least one epic's "HLR Traceability" section. Verify priority inheritance — an epic blocking all P0 work must be P0. Check for priority collapse — if an epic maps to HLRs at multiple priority levels and the lower-priority HLRs are distinct deferrable features (not incidental polish on the P0 work), they should be in separate epics so they can be planned independently.
+Check: Read the strategy's HLR list. For each HLR, verify it appears in at least one epic's "HLR Traceability" section. Verify priority inheritance — an epic blocking all P0 work must be P0. Exception: `docs-authoring` epics are exempt from priority inheritance; their priority derives from the strategy's Jira priority (Critical→P0, Major→P1, Normal/Minor/Undefined→P2), not from the implementations they depend on. Do not flag a `docs-authoring` epic's dependency on a lower-priority implementation as a priority inheritance violation. Check for priority collapse — if an epic maps to HLRs at multiple priority levels and the lower-priority HLRs are distinct deferrable features (not incidental polish on the P0 work), they should be in separate epics so they can be planned independently.
 
 ### Criterion 2: DAG Coherence (0-2 points)
 
@@ -46,7 +46,7 @@ Check: Read the strategy's HLR list. For each HLR, verify it appears in at least
 - **1**: Minor issues — an unjustified blocking edge that doesn't materially affect execution order, or critical path slightly longer than expected.
 - **0**: Circular dependency detected, or multiple unjustified blocking edges that would serialize naturally-parallel work.
 
-Check: Trace the dependency graph. Verify each edge against the DAG construction rules (boundary rules 1-3, investigation edges 4-5, implementation type ordering 6-12, implementation edges 13-16, external dependency edges 17-19, generation rules 20-23, AC rules 24-26). Check that parallel-eligible work (different repos, no shared artifacts) is not unnecessarily serialized. Verify critical path length against strategy size heuristics (S: 1-2, M standard: 3-4, M with new component: 4-5, L: 5-7).
+Check: Trace the dependency graph. Verify each edge against the DAG construction rules (boundary rules 1-3, investigation edges 4-5, implementation type ordering 6-12, implementation edges 13-16, external dependency edges 17-19, generation rules 20-23, AC rules 24-26). Check that parallel-eligible work (different repos, no shared artifacts) is not unnecessarily serialized. Note: Rule 11 edges (all implementations → `docs-authoring`) are valid DAG edges but do not trigger priority inheritance — do not flag them as unjustified serialization or priority inheritance violations. Verify critical path length against strategy size heuristics (S: 1-2, M standard: 3-4, M with new component: 4-5, L: 5-7).
 
 ### Criterion 3: Epic Boundaries (0-1 point)
 
