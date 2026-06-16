@@ -41,6 +41,8 @@ If the strategy contains a Staff Engineer Input section that is non-empty (beyon
 
 ## Step 2: Build Component Graph
 
+**Component name constraint:** Read `.context/rhai-components.txt` for the canonical list of RHAI Jira components. When assigning a component to an epic, you MUST use a name from this list. Match the strategy's Affected Components to the closest canonical name. If no reasonable match exists, use the closest parent-level component (e.g. "Model Serving Runtimes" for a new runtime not yet in the list). Log any non-obvious mappings in the decomposition summary.
+
 For each (component, change, owner team) tuple from the Affected Components table:
 
 **Active vs. Passive classification:**
@@ -242,8 +244,8 @@ For each epic, write in two steps:
 
 ```bash
 python3 scripts/frontmatter.py set artifacts/epic-tasks/{ID}-E001.md \
-    epic_id="{ID}-E001" parent_strat="{ID}" \
-    component="<component name>" team="<owner team>" \
+    epic_id="{ID}-E001" title="<epic title>" parent_strat="{ID}" \
+    component="<canonical name from .context/rhai-components.txt>" team="<owner team>" \
     type=Implementation priority=P0 \
     dependencies="{ID}-E002,{ID}-E003" \
     ai_signals.change_specificity=1 \

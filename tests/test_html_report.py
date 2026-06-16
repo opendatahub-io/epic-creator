@@ -64,7 +64,8 @@ def _setup_strategy(strat_id="RHAISTRAT-9999"):
            "## Title\n\nTest Epic One\n\n## Description\n\nA test epic.\n\n"
            "## Scope\n\n- Change A\n- Change B\n")
     _run_fm("set", f"artifacts/epic-tasks/{strat_id}-E001.md",
-            f"epic_id={strat_id}-E001", f"parent_strat={strat_id}",
+            f"epic_id={strat_id}-E001", "title=Test Epic One",
+            f"parent_strat={strat_id}",
             "component=test-component", "team=Test Team",
             "type=Implementation", "priority=P0",
             "ai_signals.change_specificity=1",
@@ -255,6 +256,7 @@ class TestHTMLReportBranchFiles:
                "Conditional epic for branch A.\n")
         _run_fm("set", "artifacts/epic-tasks/RHAISTRAT-9999-BRANCH-A-E002.md",
                 "epic_id=RHAISTRAT-9999-BRANCH-A-E002",
+                "title=Branch A Epic",
                 "parent_strat=RHAISTRAT-9999",
                 "component=test-component", "team=Test Team",
                 "type=Implementation", "priority=P1",

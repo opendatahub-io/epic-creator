@@ -41,6 +41,7 @@ def _write(path, content):
 
 VALID_EPIC_FM = {
     "epic_id": "RHAISTRAT-1234-E001",
+    "title": "Test Epic",
     "parent_strat": "RHAISTRAT-1234",
     "component": "dashboard",
     "team": "UI Team",

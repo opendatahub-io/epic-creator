@@ -61,6 +61,10 @@ SCHEMAS = {
             "type": "string",
             "required": True,
         },
+        "title": {
+            "type": "string",
+            "required": True,
+        },
         "parent_strat": {
             "type": "string",
             "required": True,
@@ -121,6 +125,12 @@ SCHEMAS = {
         "ai_implementability_score": {
             "type": "int",
             "required": False,
+            "default": None,
+        },
+        "jira_key": {
+            "type": "string",
+            "required": False,
+            "pattern": r"^[A-Z][A-Z0-9_]*-\d+$",
             "default": None,
         },
         "branch": {
