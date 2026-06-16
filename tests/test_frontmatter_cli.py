@@ -42,6 +42,7 @@ class TestSetCreateFile:
         out, err, rc = run_fm(
             "set", "artifacts/epic-tasks/RHAISTRAT-1234-E001.md",
             "epic_id=RHAISTRAT-1234-E001",
+            "title=Test Epic",
             "parent_strat=RHAISTRAT-1234",
             "component=dashboard",
             "team=UI Team",
@@ -104,6 +105,7 @@ class TestSetPreservesBody:
         run_fm(
             "set", path,
             "epic_id=RHAISTRAT-1234-E001",
+            "title=Test Epic",
             "parent_strat=RHAISTRAT-1234",
             "component=dashboard",
             "team=UI Team",
@@ -147,6 +149,7 @@ class TestSetDotNotation:
         out, _, rc = run_fm(
             "set", path,
             "epic_id=RHAISTRAT-1234-E001",
+            "title=Test Epic",
             "parent_strat=RHAISTRAT-1234",
             "component=dashboard",
             "team=UI Team",
@@ -170,6 +173,7 @@ class TestSetDotNotation:
         run_fm(
             "set", path,
             "epic_id=RHAISTRAT-1234-E001",
+            "title=Test Epic",
             "parent_strat=RHAISTRAT-1234",
             "component=dashboard",
             "team=UI Team",
@@ -194,6 +198,7 @@ class TestSetCommaSeparatedList:
         run_fm(
             "set", path,
             "epic_id=RHAISTRAT-1234-E003",
+            "title=Test Epic Three",
             "parent_strat=RHAISTRAT-1234",
             "component=api",
             "team=Backend Team",
@@ -215,6 +220,7 @@ class TestSetCommaSeparatedList:
         run_fm(
             "set", path,
             "epic_id=RHAISTRAT-1234-E001",
+            "title=Test Epic",
             "parent_strat=RHAISTRAT-1234",
             "component=api",
             "team=Backend Team",
@@ -281,6 +287,7 @@ class TestSetValidation:
         _, err, rc = run_fm(
             "set", "artifacts/epic-tasks/RHAISTRAT-1234-E001.md",
             "epic_id=RHAISTRAT-1234-E001",
+            "title=Test Epic",
             "parent_strat=RHAISTRAT-1234",
             "component=dashboard",
             "team=UI Team",
@@ -304,6 +311,7 @@ class TestSetValidation:
         _, err, rc = run_fm(
             "set", "artifacts/epic-tasks/RHAISTRAT-1234-E001.md",
             "epic_id=RHAISTRAT-1234-E001",
+            "title=Test Epic",
             "parent_strat=INVALID-123",
             "component=dashboard",
             "team=UI Team",

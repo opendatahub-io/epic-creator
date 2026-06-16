@@ -17,6 +17,7 @@ import time
 import unicodedata
 import urllib.error
 import urllib.request
+from urllib.parse import urlparse
 
 
 # ─── HTTP Layer ───────────────────────────────────────────────────────────────
@@ -70,8 +71,6 @@ def api_call_with_retry(server, path, user, token, body=None, method=None,
                 time.sleep(wait)
                 last_error = e
                 continue
-            error_body = e.read().decode("utf-8", errors="replace")
-            print(f"HTTP {e.code}: {error_body}", file=sys.stderr)
             raise
         except urllib.error.URLError as e:
             wait = 4 ** attempt
@@ -82,11 +81,22 @@ def api_call_with_retry(server, path, user, token, body=None, method=None,
     raise last_error
 
 
+def _validate_server_url(server):
+    """Enforce HTTPS scheme to prevent credential leakage (CWE-319)."""
+    parsed = urlparse(server)
+    if parsed.scheme != "https" or not parsed.netloc:
+        raise ValueError(
+            f"JIRA_SERVER must be an HTTPS URL, got: {server!r}")
+    return f"{parsed.scheme}://{parsed.netloc}{parsed.path.rstrip('/')}"
+
+
 def require_env():
     """Read and validate Jira env vars. Returns (server, user, token)."""
     server = os.environ.get("JIRA_SERVER")
     user = os.environ.get("JIRA_USER")
     token = os.environ.get("JIRA_TOKEN")
+    if server:
+        server = _validate_server_url(server)
     return server, user, token
 
 
@@ -106,7 +116,6 @@ def download_attachment(url, user, token, server=None, max_bytes=1_048_576):
     Raises ValueError if the URL doesn't match the Jira server origin or
     the response exceeds max_bytes (default 1 MB).
     """
-    from urllib.parse import urlparse
     parsed = urlparse(url)
     if parsed.scheme != "https":
         raise ValueError(f"Refused non-HTTPS URL scheme: {parsed.scheme!r}")
@@ -147,6 +156,63 @@ def download_attachment(url, user, token, server=None, max_bytes=1_048_576):
         except urllib.error.URLError as e:
             wait = 4 ** attempt
             print(f"  Attachment download error: {e}, retrying in {wait}s...",
+                  file=sys.stderr)
+            time.sleep(wait)
+            last_error = e
+    raise last_error
+
+
+def add_attachment(server, user, token, issue_key, filename, content):
+    """Attach a file to a Jira issue.
+
+    Uses multipart/form-data upload (the Jira attachments API does not
+    accept JSON).  content should be bytes or str (str is encoded to UTF-8).
+    Returns the parsed JSON response from Jira.
+    """
+    if isinstance(content, str):
+        content = content.encode("utf-8")
+    url = f"{server.rstrip('/')}/rest/api/3/issue/{issue_key}/attachments"
+    boundary = "----EpicCreatorBoundary"
+    body = (
+        f"--{boundary}\r\n"
+        f"Content-Disposition: form-data; name=\"file\"; "
+        f"filename=\"{filename}\"\r\n"
+        f"Content-Type: application/x-yaml\r\n"
+        f"\r\n"
+    ).encode("utf-8") + content + f"\r\n--{boundary}--\r\n".encode("utf-8")
+
+    credentials = base64.b64encode(f"{user}:{token}".encode()).decode()
+    req = urllib.request.Request(url, data=body, headers={
+        "Authorization": f"Basic {credentials}",
+        "Accept": "application/json",
+        "Content-Type": f"multipart/form-data; boundary={boundary}",
+        "X-Atlassian-Token": "no-check",
+    })
+    last_error = None
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                return json.loads(resp.read())
+        except urllib.error.HTTPError as e:
+            if e.code == 429:
+                retry_after = int(e.headers.get("Retry-After", 1))
+                wait = max(retry_after, 1)
+                print(f"  Rate limited, waiting {wait}s...",
+                      file=sys.stderr)
+                time.sleep(wait)
+                last_error = e
+                continue
+            if e.code < 500:
+                raise Exception(
+                    f"Attachment upload failed (HTTP {e.code})") from e
+            wait = 4 ** attempt
+            print(f"  Attachment upload HTTP {e.code}, "
+                  f"retrying in {wait}s...", file=sys.stderr)
+            time.sleep(wait)
+            last_error = e
+        except urllib.error.URLError as e:
+            wait = 4 ** attempt
+            print(f"  Attachment upload error: {e}, retrying in {wait}s...",
                   file=sys.stderr)
             time.sleep(wait)
             last_error = e

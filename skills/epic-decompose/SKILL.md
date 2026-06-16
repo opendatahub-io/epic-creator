@@ -42,9 +42,10 @@ If no IDs and no JQL, stop with usage instructions.
 
 ```bash
 bash scripts/fetch-architecture-context.sh
+python3 scripts/fetch_components.py
 ```
 
-Retry once on failure. If retry fails, stop: "bootstrap failed."
+Retry each once on failure. If retry fails, stop: "bootstrap failed."
 
 ### 4. Resume check + batch
 
