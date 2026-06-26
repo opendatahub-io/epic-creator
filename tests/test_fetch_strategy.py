@@ -11,7 +11,8 @@ import pytest
 import yaml
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
-from fetch_strategy import _find_strategy_attachment, _write_strategy
+from fetch_strategy import (_find_strategy_attachment, _has_existing_epics,
+                            _write_strategy)
 
 
 class TestFindStrategyAttachment:
@@ -241,3 +242,111 @@ class TestDownloadAttachmentValidation:
                     "https://jira.example.com/att/1", "u", "t")
         assert result == b"ok"
         assert mock_open.call_count == 2
+
+
+class TestHasExistingEpics:
+    """Tests for _has_existing_epics — checks Incorporates links and child items."""
+
+    def _make_issue(self, key="RHAISTRAT-1234", links=None):
+        return {
+            "key": key,
+            "fields": {"issuelinks": links or []},
+        }
+
+    def _incorporates_link(self):
+        return {
+            "type": {"name": "Incorporates", "outward": "incorporates"},
+            "outwardIssue": {"key": "RHAI-100"},
+        }
+
+    def test_returns_true_for_incorporates_link(self):
+        issue = self._make_issue(links=[self._incorporates_link()])
+        result = _has_existing_epics(issue, "s", "u", "t")
+        assert result is True
+
+    def test_returns_true_for_child_epics(self):
+        issue = self._make_issue(links=[])
+        with patch("fetch_strategy.api_call_with_retry",
+                   return_value={"issues": [{"key": "RHOAIENG-100"}]}):
+            result = _has_existing_epics(issue, "s", "u", "t")
+        assert result is True
+
+    def test_returns_false_when_no_epics(self):
+        issue = self._make_issue(links=[])
+        with patch("fetch_strategy.api_call_with_retry",
+                   return_value={"issues": []}):
+            result = _has_existing_epics(issue, "s", "u", "t")
+        assert result is False
+
+    def test_skips_api_call_when_incorporates_found(self):
+        issue = self._make_issue(links=[self._incorporates_link()])
+        with patch("fetch_strategy.api_call_with_retry") as mock_api:
+            _has_existing_epics(issue, "s", "u", "t")
+        mock_api.assert_not_called()
+
+    def test_ignores_non_incorporates_links(self):
+        issue = self._make_issue(links=[{
+            "type": {"name": "Blocks", "outward": "blocks"},
+            "outwardIssue": {"key": "RHAI-200"},
+        }])
+        with patch("fetch_strategy.api_call_with_retry",
+                   return_value={"issues": []}) as mock_api:
+            result = _has_existing_epics(issue, "s", "u", "t")
+        assert result is False
+        mock_api.assert_called_once()
+
+
+class TestSkipIfHasEpicsFlag:
+    """Tests for --skip-if-has-epics flag in cmd_fetch."""
+
+    def _make_issues(self, count=3):
+        return [
+            {"key": f"RHAISTRAT-{i}",
+             "fields": {
+                 "summary": f"Strategy {i}",
+                 "description": f"Desc {i}",
+                 "labels": [], "issuelinks": [],
+                 "status": {"name": "Refined"},
+                 "priority": {"name": "Major"},
+                 "attachment": [],
+             }}
+            for i in range(1, count + 1)
+        ]
+
+    def test_skips_strategies_with_epics(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        issues = self._make_issues(3)
+
+        def mock_has_epics(issue, s, u, t):
+            return issue["key"] == "RHAISTRAT-2"
+
+        ids_file = str(tmp_path / "ids.txt")
+        with patch("fetch_strategy.require_env",
+                   return_value=("s", "u", "t")), \
+             patch("fetch_strategy._search_issues",
+                   return_value=issues), \
+             patch("fetch_strategy._has_existing_epics",
+                   side_effect=mock_has_epics):
+            from fetch_strategy import cmd_fetch
+            cmd_fetch(["some jql", "--ids-file", ids_file,
+                       "--skip-if-has-epics"])
+
+        with open(ids_file) as f:
+            ids = f.read().strip().split("\n")
+        assert ids == ["RHAISTRAT-1", "RHAISTRAT-3"]
+
+    def test_fetches_all_without_flag(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        issues = self._make_issues(2)
+
+        ids_file = str(tmp_path / "ids.txt")
+        with patch("fetch_strategy.require_env",
+                   return_value=("s", "u", "t")), \
+             patch("fetch_strategy._search_issues",
+                   return_value=issues):
+            from fetch_strategy import cmd_fetch
+            cmd_fetch(["some jql", "--ids-file", ids_file])
+
+        with open(ids_file) as f:
+            ids = f.read().strip().split("\n")
+        assert ids == ["RHAISTRAT-1", "RHAISTRAT-2"]

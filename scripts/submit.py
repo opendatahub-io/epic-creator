@@ -67,8 +67,6 @@ STRAT_LABEL = "epic-creator-auto-decomposed"
 # Link type for epic dependencies (E002 "is blocked by" E001).
 DEPENDENCY_LINK_TYPE = "Blocks"
 
-# Link type for epic → parent RHAISTRAT relationship.
-PARENT_LINK_TYPE = "Incorporates"
 
 
 # ─── Component Validation ────────────────────────────────────────────────────
@@ -273,7 +271,7 @@ def _print_plan(plan, strat_id, dry_run):
     print()
 
 
-def _create_epics(server, user, token, plan):
+def _create_epics(server, user, token, plan, strat_id):
     """Create epic issues in Jira. Writes jira_key to frontmatter on success.
 
     Stops on first failure — already-created epics (jira_key in frontmatter)
@@ -313,6 +311,7 @@ def _create_epics(server, user, token, plan):
                 priority=entry["priority"],
                 labels=entry["labels"],
                 components=components,
+                parent_key=strat_id,
             )
         except Exception as e:
             print(f"  ERROR creating {epic_id}: {e}", file=sys.stderr)
@@ -384,29 +383,6 @@ def _create_dependency_links(server, user, token, plan, id_to_jira_key):
                 errors += 1
     return errors
 
-
-def _create_parent_links(server, user, token, strat_id, id_to_jira_key):
-    """Create Incorporates links from RHAISTRAT to each epic.
-
-    Returns error count.
-    """
-    errors = 0
-    for epic_id, jira_key in id_to_jira_key.items():
-        try:
-            # RHAISTRAT "incorporates" epic:
-            # inward = strategy (shows "incorporates X")
-            # outward = epic (shows "is incorporated by X")
-            create_issue_link(
-                server, user, token,
-                type_name=PARENT_LINK_TYPE,
-                inward_key=strat_id,
-                outward_key=jira_key,
-            )
-        except Exception as e:
-            print(f"  ERROR linking {jira_key} to {strat_id}: {e}",
-                  file=sys.stderr)
-            errors += 1
-    return errors
 
 
 def _label_strategy(server, user, token, strat_id):
@@ -580,9 +556,10 @@ def _submit_strategy(server, user, token, strat_id, plan, dry_run,
         print(f"  [DRY RUN] Would label {strat_id} with {STRAT_LABEL}")
         return len(pending), 0
 
-    # Phase 1: Create epic issues (idempotent — skips already-created)
+    # Phase 1: Create epic issues as children of strategy (idempotent)
     print("  Phase 1: Creating epics...")
-    id_to_jira_key, errors = _create_epics(server, user, token, plan)
+    id_to_jira_key, errors = _create_epics(server, user, token, plan,
+                                           strat_id)
     created = len(id_to_jira_key) - sum(
         1 for e in plan if e["jira_key"])
 
@@ -596,29 +573,24 @@ def _submit_strategy(server, user, token, strat_id, plan, dry_run,
     errors += _create_dependency_links(
         server, user, token, plan, id_to_jira_key)
 
-    # Phase 3: Create parent links
-    print("  Phase 3: Linking epics to strategy...")
-    errors += _create_parent_links(
-        server, user, token, strat_id, id_to_jira_key)
-
-    # Phase 4: Attach frontmatter YAML to each epic
-    print("  Phase 4: Attaching frontmatter metadata...")
+    # Phase 3: Attach frontmatter YAML to each epic
+    print("  Phase 3: Attaching frontmatter metadata...")
     errors += _attach_frontmatter(
         server, user, token, plan, id_to_jira_key)
 
-    # Phase 5: Attach conditional branch plans to investigation epics
-    print("  Phase 5: Attaching branch plans...")
+    # Phase 4: Attach conditional branch plans to investigation epics
+    print("  Phase 4: Attaching branch plans...")
     errors += _attach_branch_plans(
         server, user, token, artifacts_dir, strat_id, id_to_jira_key)
 
-    # Phase 6: Label source strategy (only when ALL epics are created)
+    # Phase 5: Label source strategy (only when ALL epics are created)
     all_created = len(id_to_jira_key) == len(plan)
     if all_created:
-        print("  Phase 6: Labeling source strategy...")
+        print("  Phase 5: Labeling source strategy...")
         if not _label_strategy(server, user, token, strat_id):
             errors += 1
     else:
-        print(f"  Phase 6: SKIP labeling — "
+        print(f"  Phase 5: SKIP labeling — "
               f"{len(plan) - len(id_to_jira_key)} epics not yet created")
 
     return created, errors

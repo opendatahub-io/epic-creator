@@ -314,7 +314,7 @@ class TestCreateEpics:
 
         with patch("submit.create_issue", side_effect=mock_create), \
              patch("submit.markdown_to_adf", return_value={}):
-            id_map, errors = _create_epics("s", "u", "t", plan)
+            id_map, errors = _create_epics("s", "u", "t", plan, "RHAISTRAT-9999")
 
         # Only E002 should be created (E001 already has jira_key)
         assert call_count == 1
@@ -330,7 +330,7 @@ class TestCreateEpics:
 
         with patch("submit.create_issue", return_value="RHAI-500"), \
              patch("submit.markdown_to_adf", return_value={}):
-            _create_epics("s", "u", "t", plan)
+            _create_epics("s", "u", "t", plan, "RHAISTRAT-9999")
 
         # Verify jira_key persisted in frontmatter
         data, _ = read_frontmatter(
@@ -354,7 +354,7 @@ class TestCreateEpics:
 
         with patch("submit.create_issue", side_effect=mock_create), \
              patch("submit.markdown_to_adf", return_value={}):
-            id_map, errors = _create_epics("s", "u", "t", plan)
+            id_map, errors = _create_epics("s", "u", "t", plan, "RHAISTRAT-9999")
 
         # Should have tried 2 (first succeeds, second fails, third skipped)
         assert call_count == 2
@@ -377,7 +377,7 @@ class TestCreateEpics:
 
         with patch("submit.create_issue", return_value="RHAI-200"), \
              patch("submit.markdown_to_adf", return_value={}):
-            id_map, errors = _create_epics("s", "u", "t", plan)
+            id_map, errors = _create_epics("s", "u", "t", plan, "RHAISTRAT-9999")
 
         assert errors == 0
         assert id_map["RHAISTRAT-9999-E001"] == "RHAI-100"  # from prior run
