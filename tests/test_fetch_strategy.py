@@ -313,8 +313,8 @@ class TestSkipIfHasEpicsFlag:
             for i in range(1, count + 1)
         ]
 
-    def test_skips_strategies_with_epics(self, tmp_path):
-        os.chdir(tmp_path)
+    def test_skips_strategies_with_epics(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
         issues = self._make_issues(3)
 
         def mock_has_epics(issue, s, u, t):
@@ -335,8 +335,8 @@ class TestSkipIfHasEpicsFlag:
             ids = f.read().strip().split("\n")
         assert ids == ["RHAISTRAT-1", "RHAISTRAT-3"]
 
-    def test_fetches_all_without_flag(self, tmp_path):
-        os.chdir(tmp_path)
+    def test_fetches_all_without_flag(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
         issues = self._make_issues(2)
 
         ids_file = str(tmp_path / "ids.txt")
