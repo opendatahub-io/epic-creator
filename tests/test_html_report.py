@@ -41,7 +41,8 @@ def _setup_strategy(strat_id="RHAISTRAT-9999"):
     """Create minimal strategy, decomposition, review, and epic artifacts."""
     # Strategy file
     _write(f"artifacts/strat-tasks/{strat_id}.md",
-           f"# Test Strategy\n\nA test strategy for report generation.\n")
+           f"---\nstrat_id: {strat_id}\ntitle: Test Strategy\n---\n\n"
+           f"A test strategy for report generation.\n")
 
     # Decomposition summary
     _write(f"artifacts/epic-tasks/{strat_id}-decomposition.md",
@@ -199,9 +200,11 @@ class TestHTMLReportContent:
 
     def test_html_escapes_special_chars(self, tmp_dir):
         _setup_strategy()
-        # Add a strategy with special chars in title
+        # Overwrite strategy with special chars in title
         _write("artifacts/strat-tasks/RHAISTRAT-9999.md",
-               '# Strategy with <script>alert("xss")</script>\n')
+               '---\nstrat_id: RHAISTRAT-9999\n'
+               'title: \'Strategy with <script>alert("xss")</script>\'\n'
+               '---\n\nBody content.\n')
 
         _run_report(
             "--start-time", "2026-01-01T00:00:00Z",

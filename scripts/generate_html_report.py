@@ -54,15 +54,9 @@ def extract_mermaid(text):
 def get_strat_title(strat_id):
     path = f"artifacts/strat-tasks/{strat_id}.md"
     if os.path.exists(path):
-        body = read_body(path)
-        for line in body.split("\n"):
-            line = line.strip()
-            if line.startswith("# "):
-                return _html_escape(line[2:].strip())
-            if line.startswith("## Title"):
-                continue
-            if line and not line.startswith("#") and not line.startswith("|"):
-                return _html_escape(line[:80])
+        fm, _ = read_frontmatter(path)
+        if fm.get("title"):
+            return _html_escape(fm["title"])
     return strat_id
 
 
