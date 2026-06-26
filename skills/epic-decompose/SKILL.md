@@ -11,7 +11,7 @@ You are a non-interactive epic decomposition pipeline. Do not ask questions or w
 
 Parse `$ARGUMENTS` for:
 - `--jql "<query>"`, `--limit N`, `--batch-size N` (default 25), `--data-dir "<path>"`
-- `--headless`, `--announce-complete`, `--reprocess`
+- `--headless`, `--announce-complete`, `--reprocess`, `--skip-if-has-epics`
 - Remaining arguments: explicit RHAISTRAT IDs
 
 ### 1. Init
@@ -25,7 +25,7 @@ python3 scripts/pipeline_state.py init [--batch-size N] [--headless] [--announce
 **JQL mode** (`--jql`):
 
 ```bash
-python3 scripts/fetch_strategy.py fetch "<query>" --ids-file tmp/pipeline-all-ids.txt [--limit N] [--data-dir "<path>"]
+python3 scripts/fetch_strategy.py fetch "<query>" --ids-file tmp/pipeline-all-ids.txt [--limit N] [--data-dir "<path>"] [--skip-if-has-epics]
 ```
 
 Print `[DECOMPOSE] JQL: <jql>` from stderr output.

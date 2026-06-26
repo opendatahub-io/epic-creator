@@ -147,6 +147,21 @@ def _search_issues(server, user, token, jql, limit=100):
     return all_issues
 
 
+def _has_existing_epics(issue, server, user, token):
+    """Check if a strategy already has child epics or Incorporates links."""
+    # Legacy check for pre-parent-field epics that used Incorporates links
+    for link in issue.get("fields", {}).get("issuelinks", []):
+        link_type = link.get("type", {}).get("name", "")
+        if link_type == "Incorporates" and "outwardIssue" in link:
+            return True
+    key = issue["key"]
+    jql = f"parent = {key} AND issuetype = Epic"
+    path = (f"/search/jql?jql={urllib.parse.quote(jql, safe='')}"
+            f"&maxResults=1&fields=key")
+    data = api_call_with_retry(server, path, user, token)
+    return bool(data.get("issues"))
+
+
 def cmd_fetch(args):
     import argparse
     parser = argparse.ArgumentParser(prog="fetch_strategy.py fetch")
@@ -155,6 +170,8 @@ def cmd_fetch(args):
                         help="Output file for fetched IDs")
     parser.add_argument("--limit", type=int, default=100,
                         help="Max issues to fetch")
+    parser.add_argument("--skip-if-has-epics", action="store_true",
+                        help="Skip strategies that already have linked epics")
     parser.add_argument("--data-dir", help="Data directory (unused, for compat)")
     opts = parser.parse_args(args)
 
@@ -167,8 +184,14 @@ def cmd_fetch(args):
     issues = _search_issues(server, user, token, opts.jql, opts.limit)
 
     all_keys = []
+    skipped = 0
     for issue in issues:
         key = issue["key"]
+        if opts.skip_if_has_epics and _has_existing_epics(issue, server, user, token):
+            print(f"Skipped {key}: already has linked epics",
+                  file=sys.stderr)
+            skipped += 1
+            continue
         _write_strategy(issue, server=server, user=user, token=token)
         all_keys.append(key)
         print(f"Fetched {key}: {issue['fields'].get('summary', '')[:60]}",
@@ -179,6 +202,9 @@ def cmd_fetch(args):
         for key in all_keys:
             f.write(f"{key}\n")
 
+    if skipped:
+        print(f"Skipped {skipped} strategies with existing epics",
+              file=sys.stderr)
     print(f"Fetched {len(all_keys)} strategies", file=sys.stderr)
 
 
