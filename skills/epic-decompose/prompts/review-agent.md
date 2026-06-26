@@ -28,7 +28,7 @@ python3 scripts/frontmatter.py set artifacts/epic-reviews/{ID}-decomp-review.md 
 
 Evaluate the decomposition against these 7 criteria. For each, note specific issues found with severity:
 
-- **Critical**: Structural defect — circular DAG, P0 HLR unmapped, epic type fundamentally wrong, missing decomposition summary
+- **Critical**: Structural defect — circular DAG, invalid DAG edge (references nonexistent epic or contradicts diagram), missing DAG edge where a data/artifact dependency exists, frontmatter dependencies inconsistent with decomposition DAG, P0 HLR unmapped, epic type fundamentally wrong
 - **Major**: Rule violation or factual error — missing rule-mandated AC (rules 24-26), frontmatter field contradicts summary table, wrong team/component assignment, unjustified blocking edge that serializes parallel work, AI implementability score contradicts signals
 - **Minor**: Style or completeness nit — could be more explicit but doesn't cause incorrect execution (e.g., a "should" NFR not explicitly addressed, slightly imprecise component name)
 
@@ -38,15 +38,15 @@ Evaluate the decomposition against these 7 criteria. For each, note specific iss
 - **1**: All P0 HLRs covered but gaps in P1 coverage, or priority inheritance errors (prerequisite epic has lower priority than work it enables).
 - **0**: P0 HLR(s) missing from epic set, or traceability matrix absent.
 
-Check: Read the strategy's HLR list. For each HLR, verify it appears in at least one epic's "HLR Traceability" section. Verify priority inheritance — an epic blocking all P0 work must be P0. Exception: `docs-authoring` epics are exempt from priority inheritance; their priority derives from the strategy's Jira priority (Critical→P0, Major→P1, Normal/Minor/Undefined→P2), not from the implementations they depend on. Do not flag a `docs-authoring` epic's dependency on a lower-priority implementation as a priority inheritance violation. Check for priority collapse — if an epic maps to HLRs at multiple priority levels and the lower-priority HLRs are distinct deferrable features (not incidental polish on the P0 work), they should be in separate epics so they can be planned independently.
+Check: Read the strategy's HLR list. For each HLR, verify it appears in at least one epic's "HLR Traceability" section. Verify priority inheritance — an epic blocking all P0 work must be P0. Exception: `docs-authoring` epics are exempt from priority inheritance; their priority derives from the strategy's Jira priority (Critical→P0, Major→P1, Normal/Minor/Undefined→P2), not from the implementations they depend on. Do not flag a `docs-authoring` epic's dependency on a lower-priority implementation as a priority inheritance violation. Check for priority collapse — if an epic maps to HLRs at multiple priority levels and the lower-priority HLRs are distinct deferrable features (not incidental polish on the P0 work), they should be in separate epics so they can be planned independently. Priority collapse with deferrable features is always a major issue regardless of component/team boundary constraints — the ability to defer work independently is a planning requirement that overrides boundary convenience.
 
 ### Criterion 2: DAG Coherence (0-2 points)
 
-- **2**: No circular dependencies. Every blocking edge is justified by the DAG construction rules. Critical path length is reasonable for strategy size.
+- **2**: No circular dependencies. Every blocking edge is justified by the DAG construction rules. Critical path length is reasonable for strategy size. Epic frontmatter `dependencies` match the decomposition summary DAG.
 - **1**: Minor issues — an unjustified blocking edge that doesn't materially affect execution order, or critical path slightly longer than expected.
-- **0**: Circular dependency detected, or multiple unjustified blocking edges that would serialize naturally-parallel work.
+- **0**: Circular dependency detected, invalid edge (references nonexistent epic), missing edge where a data/artifact dependency exists, frontmatter dependencies inconsistent with decomposition DAG diagram, or multiple unjustified blocking edges that would serialize naturally-parallel work.
 
-Check: Trace the dependency graph. Verify each edge against the DAG construction rules (boundary rules 1-3, investigation edges 4-5, implementation type ordering 6-12, implementation edges 13-16, external dependency edges 17-19, generation rules 20-23, AC rules 24-26). Check that parallel-eligible work (different repos, no shared artifacts) is not unnecessarily serialized. Note: Rule 11 edges (all implementations → `docs-authoring`) are valid DAG edges but do not trigger priority inheritance — do not flag them as unjustified serialization or priority inheritance violations. Verify critical path length against strategy size heuristics (S: 1-2, M standard: 3-4, M with new component: 4-5, L: 5-7).
+Check: Trace the dependency graph. Verify each edge against the DAG construction rules (boundary rules 1-3, investigation edges 4-5, implementation type ordering 6-12, implementation edges 13-16, external dependency edges 17-19, generation rules 20-23, AC rules 24-26). Check that parallel-eligible work (different repos, no shared artifacts) is not unnecessarily serialized. Note: Rule 11 edges (all implementations → `docs-authoring`) are valid DAG edges but do not trigger priority inheritance — do not flag them as unjustified serialization or priority inheritance violations. Verify critical path length against strategy size heuristics (S: 1-2, M standard: 3-4, M with new component: 4-5, L: 5-7). **Cross-check consistency**: verify that every edge in the decomposition summary DAG diagram has a matching `dependencies` entry in the target epic's frontmatter, and vice versa. Any mismatch (edge in diagram but not in frontmatter, or frontmatter dependency referencing a nonexistent epic) is a critical issue — score 0. **Cross-check completeness**: also scan epic content (scope, ACs, descriptions) for data/artifact dependencies not captured in the DAG — e.g., an epic that consumes a schema, image, or API produced by another epic but has no edge to it. A missing edge discoverable from epic content is a critical issue even if the diagram and frontmatter are consistent with each other.
 
 ### Criterion 3: Epic Boundaries (0-2 points)
 
@@ -62,7 +62,7 @@ Check: For each epic, verify component and team fields. Look for epics that bund
 - **1**: Types are correct but gating metadata has issues — `gated_by` set without `gate_failure_impact`, or an Investigation dependency missing `gated_by` on a downstream epic.
 - **0**: An epic typed as Investigation should be Implementation (or vice versa). Test: does the outcome of this "Investigation" actually change which downstream epics exist or what they do? If no, it should be an Implementation or an acceptance criterion.
 
-Check: For each Investigation epic, verify it has downstream epics that depend on its outcome. For each Implementation, verify it produces a concrete artifact. For every epic with a non-null `gated_by` field, verify `gate_failure_impact` has both `action` and `fallback_approach` populated — if nothing changes on gate failure, this is a scheduling dependency (belongs in `dependencies` only), not a true gate (major issue). For every epic that lists an Investigation in `dependencies`, verify `gated_by` is set — an Investigation dependency without `gated_by` is a major issue because by definition the Investigation outcome changes the downstream epic's scope or existence.
+Check: For each Investigation epic, verify it has downstream epics that depend on its outcome. For each Implementation, verify it produces a concrete artifact. For every epic with a non-null `gated_by` field, verify `gate_failure_impact` has both `action` and `fallback_approach` populated — if nothing changes on gate failure, this is a scheduling dependency (belongs in `dependencies` only), not a true gate (major issue). For every epic that lists an Investigation in `dependencies`, verify `gated_by` is set — an Investigation dependency without `gated_by` is a major issue because by definition the Investigation outcome changes the downstream epic's scope or existence. Verify that every `gated_by` target appears in that epic's direct `dependencies` list — a `gated_by` referencing an epic only reachable transitively is a major issue because automated pipeline consumers use the `dependencies` list to detect gates.
 
 ### Criterion 5: AI Implementability Scoring (0-2 points)
 
@@ -78,7 +78,7 @@ Check: For each epic, verify the `ai_signals` values in frontmatter against the 
 - **1**: ACs are present and mostly testable, but one rule-mandated AC is missing or one epic has ACs that are slightly vague (could be made more specific).
 - **0**: Epics have no ACs, or ACs are vague/untestable across multiple epics, or multiple rule-mandated ACs are missing.
 
-Check: Verify each epic has ACs. Check that replacement epics have rollback/feature-flag ACs, docs-authoring has technical review AC, and konflux-chain epics have build pipeline AC.
+Check: Verify each epic has ACs. Check that replacement epics have rollback/feature-flag ACs, docs-authoring has technical review AC, and konflux-chain epics have build pipeline AC. Any missing rule-mandated AC is a major issue — this applies to every epic that meets the rule's criteria, not just the first or most obvious one.
 
 ### Criterion 7: Completeness (0-2 points)
 
@@ -90,11 +90,7 @@ Check: Compare the strategy's scope, acceptance criteria, and capabilities again
 
 ## Step 3: Score and Decide
 
-Sum the points across all 7 criteria (max 14). When scoring each criterion, severity matters:
-
-- **Critical** issue in a criterion → score 0 for that criterion
-- **Major** issue in a criterion → lose at least 1 point (score 1/2 for that criterion)
-- **Minor** issues alone do not reduce the score, but 3+ minors in the same criterion costs 1 point
+Sum the points across all 7 criteria (max 14). Any Critical or Major issue in a criterion forces that criterion to score 0. Minor issues alone do not reduce the score, but 3+ minors in the same criterion costs 1 point.
 
 **Auto-fail rule: Any criterion that scores 0 → `pass: false` regardless of total score.** A zero on any dimension means the decomposition is structurally broken on that dimension and must be revised.
 
