@@ -79,7 +79,7 @@ Check: For each epic, read `artifacts/epic-tasks/{ID}-ENNN-ai-signals.md` and ve
 - **1**: ACs are present and mostly testable, but one rule-mandated AC is missing or one epic has ACs that are slightly vague (could be made more specific).
 - **0**: Epics have no ACs, or ACs are vague/untestable across multiple epics, or multiple rule-mandated ACs are missing.
 
-Check: Verify each epic has ACs. Check that replacement epics have rollback/feature-flag ACs, docs-authoring has technical review AC, and konflux-chain epics have build pipeline AC. Any missing rule-mandated AC is a major issue — this applies to every epic that meets the rule's criteria, not just the first or most obvious one.
+Check: Verify each epic has ACs. Check that replacement epics have rollback/feature-flag ACs, docs-authoring has technical review AC, and konflux-chain epics have build pipeline AC. Any missing rule-mandated AC is a major issue — this applies to every epic that meets the rule's criteria, not just the first or most obvious one. Also check that epic bodies do not reference sibling epics by draft ID (e.g., "E001", "E003") — draft IDs are meaningless in Jira. Each reference is a minor issue; 3+ across the decomposition costs a point.
 
 ### Criterion 7: Completeness (0-2 points)
 

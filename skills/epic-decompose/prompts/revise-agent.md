@@ -55,6 +55,8 @@ For each issue in the review's `issues` list, apply the appropriate correction:
 ### Completeness issues
 - **Missing strategy scope**: Create new epic(s) to cover the gap. Follow the same frontmatter schema and body structure as existing epics. Assign new epic IDs continuing the sequence.
 
+**When rewriting or adding epic body content:** Do not reference sibling epics by draft ID (e.g., "E001", "E003"). Describe dependencies in plain terms (e.g., "the OTEL env var injection capability" not "E003"). Draft IDs are internal to the decomposition and meaningless in Jira.
+
 ## Step 3: Update Decomposition Summary
 
 If no corrections were needed (review passed with no issues):
