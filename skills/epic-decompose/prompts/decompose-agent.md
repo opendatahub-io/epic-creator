@@ -240,6 +240,8 @@ For each epic, write in two steps:
    - **HLR Traceability** (which strategy HLRs this epic covers)
    Signal rationales go in a separate file (see Step 6) — do not include them in the epic body.
 
+   **No cross-references to sibling epics.** Do not reference other epics by draft ID (e.g., "E001", "E003") anywhere in the body — not in descriptions, scope, acceptance criteria, or HLR traceability. Draft IDs are internal to the decomposition and meaningless once epics are created in Jira. Dependency relationships are captured by frontmatter `dependencies` and Jira Blocks links. Each epic body must be self-contained: describe what it delivers and depends on in plain terms (e.g., "the OTEL env var injection capability" not "E003") without naming sibling epics.
+
 2. Set frontmatter via script:
 
 ```bash
