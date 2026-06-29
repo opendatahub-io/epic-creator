@@ -271,7 +271,28 @@ def _print_plan(plan, strat_id, dry_run):
     print()
 
 
-def _create_epics(server, user, token, plan, strat_id):
+def _get_strat_assignee(server, user, token, strat_id):
+    """Fetch the assignee account ID from a strategy issue.
+
+    Returns the accountId string or None if unassigned.
+    """
+    try:
+        issue = get_issue(server, user, token, strat_id,
+                          fields=["assignee"])
+        assignee = issue.get("fields", {}).get("assignee")
+        if assignee:
+            display = assignee.get("displayName", assignee["accountId"])
+            print(f"  Strategy assignee: {display}")
+            return assignee["accountId"]
+        print("  Strategy assignee: (unassigned)")
+        return None
+    except Exception as e:
+        print(f"  WARNING: Could not fetch assignee for {strat_id}: {e}",
+              file=sys.stderr)
+        return None
+
+
+def _create_epics(server, user, token, plan, strat_id, assignee_id=None):
     """Create epic issues in Jira. Writes jira_key to frontmatter on success.
 
     Stops on first failure — already-created epics (jira_key in frontmatter)
@@ -312,6 +333,7 @@ def _create_epics(server, user, token, plan, strat_id):
                 labels=entry["labels"],
                 components=components,
                 parent_key=strat_id,
+                assignee_id=assignee_id,
             )
         except Exception as e:
             print(f"  ERROR creating {epic_id}: {e}", file=sys.stderr)
@@ -556,10 +578,13 @@ def _submit_strategy(server, user, token, strat_id, plan, dry_run,
         print(f"  [DRY RUN] Would label {strat_id} with {STRAT_LABEL}")
         return len(pending), 0
 
+    # Fetch strategy assignee to propagate to epics
+    assignee_id = _get_strat_assignee(server, user, token, strat_id)
+
     # Phase 1: Create epic issues as children of strategy (idempotent)
     print("  Phase 1: Creating epics...")
     id_to_jira_key, errors = _create_epics(server, user, token, plan,
-                                           strat_id)
+                                           strat_id, assignee_id)
     created = len(id_to_jira_key) - sum(
         1 for e in plan if e["jira_key"])
 

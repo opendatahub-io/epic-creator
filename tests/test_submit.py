@@ -16,6 +16,7 @@ from submit import (
     _build_description,
     _build_plan,
     _create_epics,
+    _get_strat_assignee,
     _scan_branch_epics,
     _scan_epics,
     _check_review_passed,
@@ -598,6 +599,67 @@ class TestBranchPlans:
                 id_to_jira_key)
 
         assert errors == 2  # one per branch
+
+
+class TestGetStratAssignee:
+    """Test _get_strat_assignee fetches assignee from strategy issue."""
+
+    def test_returns_account_id(self):
+        from unittest.mock import patch
+        mock_issue = {
+            "fields": {
+                "assignee": {
+                    "accountId": "abc123",
+                    "displayName": "Jane Doe",
+                }
+            }
+        }
+        with patch("submit.get_issue", return_value=mock_issue):
+            result = _get_strat_assignee("s", "u", "t", "RHAISTRAT-100")
+        assert result == "abc123"
+
+    def test_returns_none_when_unassigned(self):
+        from unittest.mock import patch
+        mock_issue = {"fields": {"assignee": None}}
+        with patch("submit.get_issue", return_value=mock_issue):
+            result = _get_strat_assignee("s", "u", "t", "RHAISTRAT-100")
+        assert result is None
+
+    def test_returns_none_on_api_error(self):
+        from unittest.mock import patch
+        with patch("submit.get_issue", side_effect=RuntimeError("timeout")):
+            result = _get_strat_assignee("s", "u", "t", "RHAISTRAT-100")
+        assert result is None
+
+
+class TestCreateEpicsAssignee:
+    """Test that _create_epics passes assignee_id to create_issue."""
+
+    def test_passes_assignee_id(self, tmp_dir):
+        from unittest.mock import patch, call
+        _setup_strategy(epic_count=1)
+        epics = _scan_epics("artifacts", "RHAISTRAT-9999")
+        plan = _build_plan(epics, set())
+
+        with patch("submit.create_issue", return_value="RHAI-500") as mock_ci, \
+             patch("submit.markdown_to_adf", return_value={}):
+            _create_epics("s", "u", "t", plan, "RHAISTRAT-9999",
+                          assignee_id="user-abc")
+
+        assert mock_ci.call_count == 1
+        assert mock_ci.call_args.kwargs["assignee_id"] == "user-abc"
+
+    def test_no_assignee_when_none(self, tmp_dir):
+        from unittest.mock import patch
+        _setup_strategy(epic_count=1)
+        epics = _scan_epics("artifacts", "RHAISTRAT-9999")
+        plan = _build_plan(epics, set())
+
+        with patch("submit.create_issue", return_value="RHAI-500") as mock_ci, \
+             patch("submit.markdown_to_adf", return_value={}):
+            _create_epics("s", "u", "t", plan, "RHAISTRAT-9999")
+
+        assert mock_ci.call_args.kwargs.get("assignee_id") is None
 
 
 class TestDryRun:
