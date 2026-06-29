@@ -166,7 +166,7 @@ Evaluate each of the 9 signals below as +1 (favorable), 0 (neutral/N/A), or -1 (
 | 8 | Repo access | `repo_access` | AI can clone and modify target repo | Repo inaccessible or special access required |
 | 9 | Architecture claims | `architecture_claims` | Strategy cites specific architecture context files/APIs | Unsubstantiated architecture claims |
 
-Show which signals fired and the direction each pulled in the epic body's "AI Implementability Signals" section.
+Write the signal rationale to a separate file `artifacts/epic-tasks/{ID}-ENNN-ai-signals.md` (one per epic). Format as a markdown table with Signal, Value, and Rationale columns. Do not write the signals table into the epic body.
 
 ## Step 6.5: Health Warnings
 
@@ -238,7 +238,7 @@ For each epic, write in two steps:
    - **Scope** (specific changes in this epic)
    - **Acceptance Criteria** (derived from strategy)
    - **HLR Traceability** (which strategy HLRs this epic covers)
-   - **AI Implementability Signals** (which signals fired and rationale — do not include a total score line)
+   Signal rationales go in a separate file (see Step 6) — do not include them in the epic body.
 
 2. Set frontmatter via script:
 

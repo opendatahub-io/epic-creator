@@ -14,7 +14,8 @@ Output: artifacts/epic-reviews/{ID}-decomp-review.md
 
 1. Read the strategy file
 2. Read the decomposition summary
-3. Read all epic files matching `artifacts/epic-tasks/{ID}-E*.md`
+3. Read all epic files matching `artifacts/epic-tasks/{ID}-E*.md` (excluding `-ai-signals.md` files)
+4. Read all AI signal rationale files matching `artifacts/epic-tasks/{ID}-E*-ai-signals.md`
 
 If the decomposition summary does not exist, create the review file with an error and stop:
 
@@ -66,11 +67,11 @@ Check: For each Investigation epic, verify it has downstream epics that depend o
 
 ### Criterion 5: AI Implementability Scoring (0-2 points)
 
-- **2**: Each signal's +1/0/-1 value in `ai_signals` frontmatter is consistent with the 9-signal rubric conditions and the strategy content. Signal rationales in the body are justified.
+- **2**: Each signal's +1/0/-1 value in `ai_signals` frontmatter is consistent with the 9-signal rubric conditions and the strategy content. Signal rationales in the ai-signals file are justified.
 - **1**: Most signals are correct but 1-2 signals have arguable values (e.g., a borderline call on `existing_foundation` for a partially-greenfield epic), or signal rationales are present but thin.
-- **0**: Signal values contradict the rubric conditions (e.g., `open_questions: 1` but the epic has unresolved questions that would change implementation approach), or `ai_signals` is missing from frontmatter, or signal breakdown is missing from the body.
+- **0**: Signal values contradict the rubric conditions (e.g., `open_questions: 1` but the epic has unresolved questions that would change implementation approach), or `ai_signals` is missing from frontmatter, or ai-signals file is missing.
 
-Check: For each epic, verify the `ai_signals` values in frontmatter against the rubric conditions and strategy content. Cross-check that the body's signal rationales match the frontmatter values. Do **not** check arithmetic or thresholds — `ai_implementability` and `ai_implementability_score` are computed by the pipeline, not the decompose agent.
+Check: For each epic, read `artifacts/epic-tasks/{ID}-ENNN-ai-signals.md` and verify the `ai_signals` values in frontmatter against the rubric conditions and strategy content. Cross-check that the signal rationales match the frontmatter values. Do **not** check arithmetic or thresholds — `ai_implementability` and `ai_implementability_score` are computed by the pipeline, not the decompose agent.
 
 ### Criterion 6: Acceptance Criteria Quality (0-2 points)
 
