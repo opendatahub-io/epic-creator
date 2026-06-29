@@ -71,6 +71,38 @@ class TestSchemas:
         assert "ai_signals" in SCHEMAS["epic-task"]
         assert SCHEMAS["epic-task"]["ai_signals"]["type"] == "dict"
 
+    def test_epic_task_schema_has_investigation_signals(self):
+        spec = SCHEMAS["epic-task"].get("investigation_signals")
+        assert spec is not None and spec["type"] == "dict"
+        assert set(spec["fields"]) == {
+            "question_specificity", "source_accessibility", "local_runnability",
+            "cluster_hardware_dependence", "human_judgment_required",
+        }
+
+    def test_investigation_signals_round_trip(self, tmp_dir):
+        data = {**VALID_EPIC_FM, "type": "Investigation",
+                "investigation_signals": {
+                    "question_specificity": 1, "source_accessibility": 1,
+                    "local_runnability": 1, "cluster_hardware_dependence": 0,
+                    "human_judgment_required": -2}}
+        write_frontmatter("epic.md", data, "epic-task")
+        result, _ = read_frontmatter_validated("epic.md", "epic-task")
+        assert result["investigation_signals"]["human_judgment_required"] == -2
+        assert result["investigation_signals"]["local_runnability"] == 1
+
+    def test_investigation_signals_rejects_non_int(self, tmp_dir):
+        bad = {**VALID_EPIC_FM, "type": "Investigation",
+               "investigation_signals": {"question_specificity": "nope"}}
+        assert validate(bad, "epic-task")  # non-empty error list
+
+    def test_investigation_signals_rejects_out_of_range(self):
+        # source_accessibility is bounded to {0, 1}; 5 must fail validation
+        # rather than silently skew routing.
+        bad = {**VALID_EPIC_FM, "type": "Investigation",
+               "investigation_signals": {"source_accessibility": 5}}
+        errors = validate(bad, "epic-task")
+        assert any("source_accessibility" in e for e in errors)
+
     def test_decomp_summary_has_revised(self):
         assert "revised" in SCHEMAS["decomp-summary"]
         spec = SCHEMAS["decomp-summary"]["revised"]

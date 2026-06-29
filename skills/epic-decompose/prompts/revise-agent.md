@@ -43,7 +43,7 @@ For each issue in the review's `issues` list, apply the appropriate correction:
 - **Implementation should be Investigation**: Change the `type` field to Investigation. Add downstream blocking edges to epics whose scope depends on this epic's outcome.
 
 ### AI Implementability Scoring issues
-- **Signal value incorrect**: Re-evaluate the specific signal(s) the reviewer identified as wrong. Update the `ai_signals` values in frontmatter and the corresponding rationale in `artifacts/epic-tasks/{ID}-ENNN-ai-signals.md`. Do **not** update `ai_implementability` or `ai_implementability_score` — the pipeline recomputes those automatically from the signal values.
+- **Signal value incorrect**: Re-evaluate the specific signal(s) the reviewer identified as wrong. Update the values in the epic's type-appropriate frontmatter field — `ai_signals` for Implementation epics, `investigation_signals` for Investigation epics — and the corresponding rationale in `artifacts/epic-tasks/{ID}-ENNN-ai-signals.md`. Do **not** update `ai_implementability` or `ai_implementability_score` — the pipeline recomputes those automatically from the signal values.
 
 ### Acceptance Criteria issues
 - **Missing rule-mandated AC**: Add the required AC to the epic:

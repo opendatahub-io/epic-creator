@@ -121,6 +121,27 @@ SCHEMAS = {
                 "architecture_claims": {"type": "int", "required": False, "default": 0},
             },
         },
+        # Investigation epics use this set instead of ai_signals. The
+        # Implementation signals above penalize the *defining* traits of an
+        # investigation (open questions, no foundation), so they systematically
+        # mis-route investigations to Low. These five predict, at decomposition
+        # time, whether the AI skill can resolve the unknowns (assign to skill)
+        # or they need a person. Scored +1/0 for positives, 0/-1/-2 for blockers.
+        "investigation_signals": {
+            "type": "dict",
+            "required": False,
+            "default": None,
+            "fields": {
+                # Positives: is it well-posed, readable, and runnable?
+                "question_specificity":        {"type": "int", "required": False, "default": 0, "enum": [-1, 0, 1]},
+                "source_accessibility":        {"type": "int", "required": False, "default": 0, "enum": [0, 1]},
+                "local_runnability":           {"type": "int", "required": False, "default": 0, "enum": [0, 1]},
+                # Blockers (0/-1/-2): does resolving it need a cluster/hardware
+                # or a human decision the AI can't make?
+                "cluster_hardware_dependence": {"type": "int", "required": False, "default": 0, "enum": [-2, -1, 0]},
+                "human_judgment_required":     {"type": "int", "required": False, "default": 0, "enum": [-2, -1, 0]},
+            },
+        },
         "ai_implementability": {
             "type": "string",
             "required": False,
@@ -266,6 +287,9 @@ def _validate_field(name, value, spec, path=""):
         if not isinstance(value, int) or isinstance(value, bool):
             errors.append(
                 f"{full_name}: expected int, got {type(value).__name__}")
+        elif "enum" in spec and value not in spec["enum"]:
+            errors.append(
+                f"{full_name}: {value} not in {spec['enum']}")
 
     elif expected_type == "bool":
         if not isinstance(value, bool):

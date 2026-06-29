@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Compute AI implementability scores from individual signal values.
 
-Reads ai_signals from epic frontmatter, sums them, applies thresholds,
-and writes ai_implementability + ai_implementability_score back.
+Reads the epic's signal set from frontmatter and writes ai_implementability
++ ai_implementability_score back. Implementation epics use ai_signals (summed
+against the thresholds below); Investigation epics use investigation_signals
+(a routing model with guards — see classify_investigation).
 
-Thresholds:
+Implementation thresholds:
     score >= 3  → High
     0 <= score <= 2 → Medium
     score <= -1 → Low
@@ -33,6 +35,17 @@ SIGNAL_FIELDS = [
     "architecture_claims",
 ]
 
+# Investigation epics use a separate, purpose-built signal set (see
+# artifact_utils epic-task schema). It predicts, at decomposition time,
+# whether the AI skill can resolve the unknowns or a person should.
+INVESTIGATION_SIGNAL_FIELDS = [
+    "question_specificity",
+    "source_accessibility",
+    "local_runnability",
+    "cluster_hardware_dependence",
+    "human_judgment_required",
+]
+
 
 def classify(score):
     if score >= 3:
@@ -41,6 +54,36 @@ def classify(score):
         return "Medium"
     else:
         return "Low"
+
+
+def classify_investigation(signals):
+    """Routing classification for Investigation epics.
+
+    Returns (score, classification). The class is a routing decision
+    (High = assign to the AI skill, Medium = hybrid: skill does the desk/
+    local parts and hands off the rest, Low = assign to a person), NOT a
+    pure function of the score — two guards override the sum:
+
+      - Low guard: the skill can't meaningfully proceed — questions are too
+        vague (question_specificity < 0), OR there is no AI-reachable oracle
+        (nothing readable that *contains* the answer AND nothing runnable),
+        OR the blockers drag the net negative.
+      - High gate: only when nothing must be handed to a cluster or a human
+        (both blockers == 0); any blocker caps the routing at Medium.
+    """
+    s = {f: (signals.get(f) or 0) for f in INVESTIGATION_SIGNAL_FIELDS}
+    total = sum(s.values())
+    spec = s["question_specificity"]
+    src = s["source_accessibility"]
+    run = s["local_runnability"]
+    cluster = s["cluster_hardware_dependence"]
+    human = s["human_judgment_required"]
+
+    if spec < 0 or (src <= 0 and run <= 0) or total <= -1:
+        return total, "Low"
+    if total >= 2 and cluster == 0 and human == 0:
+        return total, "High"
+    return total, "Medium"
 
 
 def compute_for_epic(epic_path):
@@ -53,18 +96,29 @@ def compute_for_epic(epic_path):
     if not data:
         return None
 
-    signals = data.get("ai_signals")
-    if not signals or not isinstance(signals, dict):
-        return None
+    # Dispatch on the epic type, not on which signal block happens to be
+    # present — an epic carrying a stale/duplicated block must still be scored
+    # by its declared type's rubric. Investigation -> routing model; everything
+    # else -> Implementation signal sum.
+    if data.get("type") == "Investigation":
+        inv = data.get("investigation_signals")
+        if not isinstance(inv, dict):
+            return None
+        total, classification = classify_investigation(inv)
+    else:
+        signals = data.get("ai_signals")
+        if not signals or not isinstance(signals, dict):
+            return None
 
-    total = 0
-    for field in SIGNAL_FIELDS:
-        val = signals.get(field, 0)
-        if val is None:
-            val = 0
-        total += val
+        total = 0
+        for field in SIGNAL_FIELDS:
+            val = signals.get(field, 0)
+            if val is None:
+                val = 0
+            total += val
 
-    classification = classify(total)
+        classification = classify(total)
+
     epic_id = data.get("epic_id", os.path.basename(epic_path))
 
     old_score = data.get("ai_implementability_score")
@@ -100,7 +154,7 @@ def compute_for_strategy(strat_id):
                   file=sys.stderr)
             count += 1
         else:
-            print(f"  {os.path.basename(path)}: no ai_signals, skipped",
+            print(f"  {os.path.basename(path)}: no signals, skipped",
                   file=sys.stderr)
 
     return count

@@ -152,7 +152,11 @@ For each epic, determine:
 
 ### AI Implementability Signals
 
-Evaluate each of the 9 signals below as +1 (favorable), 0 (neutral/N/A), or -1 (unfavorable). Write the values into `ai_signals` in frontmatter. **Do not compute the total score or classification** — the pipeline computes those deterministically after you finish.
+Score signals so the pipeline can compute an AI-implementability classification deterministically. **Do not compute the total score or classification yourself.** Use the signal set that matches the epic `type` — Implementation and Investigation epics measure different things.
+
+#### Implementation epics → `ai_signals` (9 signals)
+
+Evaluate each as +1 (favorable), 0 (neutral/N/A), or -1 (unfavorable). Write the values into `ai_signals`.
 
 | # | Signal | Frontmatter key | +1 Condition | -1 Condition |
 |---|--------|----------------|-------------|-------------|
@@ -166,7 +170,21 @@ Evaluate each of the 9 signals below as +1 (favorable), 0 (neutral/N/A), or -1 (
 | 8 | Repo access | `repo_access` | AI can clone and modify target repo | Repo inaccessible or special access required |
 | 9 | Architecture claims | `architecture_claims` | Strategy cites specific architecture context files/APIs | Unsubstantiated architecture claims |
 
-Write the signal rationale to a separate file `artifacts/epic-tasks/{ID}-ENNN-ai-signals.md` (one per epic). Format as a markdown table with Signal, Value, and Rationale columns. Do not write the signals table into the epic body.
+#### Investigation epics → `investigation_signals` (5 signals)
+
+**Do not use the 9 Implementation signals for Investigation epics.** Those penalize the *defining* traits of an investigation (open questions, no prior foundation, external dependency), so they mis-route nearly every investigation to Low — even ones the AI resolves easily. Instead score these five, which predict whether the AI investigation skill can resolve the unknowns (→ assign to the skill) or a person must (→ assign to a person). Write the values into `investigation_signals`.
+
+| # | Signal | Frontmatter key | Range | How to score |
+|---|--------|-----------------|-------|--------------|
+| 1 | Question specificity | `question_specificity` | -1 / 0 / +1 | +1 concrete, enumerable questions with a defined pass/fail criterion; -1 vague or criterion undefined (a human must frame it first) |
+| 2 | Source accessibility | `source_accessibility` | 0 / +1 | +1 a readable artifact that **contains or determines the answer** exists (open repo, docs, public record). 0 when the only readable material does **not** hold the answer — e.g. a decision/PR still under review (the answer doesn't exist yet) |
+| 3 | Local runnability | `local_runnability` | 0 / +1 | +1 the components can be exercised as a downloaded **binary or pip/npm library** locally — including backing a datastore with an embedded/bundled server (e.g. `pgserver` for PostgreSQL). 0 only if it genuinely can't run without a container/cluster |
+| 4 | Cluster/hardware dependence | `cluster_hardware_dependence` | -2 / -1 / 0 | 0 none. -1 some *peripheral* questions need a live cluster / GPU / prod-scale. -2 a *gating* question does. **What an operator/controller _generates_** (rendered CR, template, NetworkPolicy, RBAC in its source repo) is readable source — score it under `source_accessibility`, **not** here; only the *as-deployed runtime state* of a live cluster counts as a dependence |
+| 5 | Human judgment required | `human_judgment_required` | -2 / -1 / 0 | 0 none. -1 a *peripheral* question needs a stakeholder/product decision or external-party input. -2 the *gating* question is itself a human/governance decision or external coordination the AI cannot make (e.g. "is this ADR approved?") |
+
+The pipeline routes: **High** → assign to the investigation skill; **Medium** → hybrid (skill resolves the desk/local parts and hands a spec to a human for the rest); **Low** → assign to a person.
+
+Write the signal rationale to a separate file `artifacts/epic-tasks/{ID}-ENNN-ai-signals.md` (one per epic), for whichever signal set you used. Format as a markdown table with Signal, Value, and Rationale columns. Do not write the signals table into the epic body.
 
 ## Step 6.5: Health Warnings
 
@@ -261,9 +279,24 @@ python3 scripts/frontmatter.py set artifacts/epic-tasks/{ID}-E001.md \
     ai_signals.architecture_claims=1
 ```
 
+For an **Investigation** epic, set `type=Investigation` and write the five
+`investigation_signals` instead of `ai_signals` (do not set both):
+
+```bash
+python3 scripts/frontmatter.py set artifacts/epic-tasks/{ID}-E001.md \
+    epic_id="{ID}-E001" title="<epic title>" parent_strat="{ID}" \
+    component="<canonical name>" team="<owner team>" \
+    type=Investigation priority=P0 \
+    investigation_signals.question_specificity=1 \
+    investigation_signals.source_accessibility=1 \
+    investigation_signals.local_runnability=1 \
+    investigation_signals.cluster_hardware_dependence=0 \
+    investigation_signals.human_judgment_required=0
+```
+
 Add optional fields only when non-null: `implementation_type=<value>`, `branch=<value>`, `gated_by=<epic_id>`, `gate_failure_impact.action=<value> gate_failure_impact.fallback_approach="<text>"`. Every epic that depends on an Investigation should have `gated_by` pointing to that Investigation (see Rule 3).
 
-Do **not** include `ai_implementability` or `ai_implementability_score` — the pipeline computes those from `ai_signals` automatically.
+Do **not** include `ai_implementability` or `ai_implementability_score` — the pipeline computes those from `ai_signals` (Implementation) or `investigation_signals` (Investigation) automatically.
 
 ### Step 8c: Verify consistency
 

@@ -27,6 +27,12 @@ SIGNAL_NAMES = [
     "human_process_gates", "repo_access", "architecture_claims",
 ]
 
+# Investigation epics carry a different signal set (see compute_ai_scores).
+INVESTIGATION_SIGNAL_NAMES = [
+    "question_specificity", "source_accessibility", "local_runnability",
+    "cluster_hardware_dependence", "human_judgment_required",
+]
+
 
 def _html_escape(text):
     """Escape HTML special characters."""
@@ -93,9 +99,9 @@ def severity_badge(sev):
     return f'<span class="badge {cls}">{_html_escape(sev)}</span>'
 
 
-def render_signals(signals):
+def render_signals(signals, names=SIGNAL_NAMES):
     html = '<div class="signals-grid">'
-    for name in SIGNAL_NAMES:
+    for name in names:
         val = signals.get(name, 0) or 0
         cls = signal_class(val)
         sign = f"+{val}" if val > 0 else str(val)
@@ -151,7 +157,15 @@ def render_gate_info(fm):
 
 def render_epic_card(fm, body):
     eid = fm["epic_id"]
-    signals = fm.get("ai_signals", {}) or {}
+    # Drive the rubric off the epic type, not signal-block presence, so an
+    # Investigation epic always renders the investigation rubric even if its
+    # block is empty/malformed (which then shows as zeros rather than the
+    # wrong 9-signal labels).
+    if fm.get("type") == "Investigation":
+        signals = fm.get("investigation_signals") or {}
+        signal_names = INVESTIGATION_SIGNAL_NAMES
+    else:
+        signals, signal_names = fm.get("ai_signals", {}) or {}, SIGNAL_NAMES
     ai_class = fm.get("ai_implementability", "?")
     ai_score = fm.get("ai_implementability_score", "?")
     impl_type = fm.get("implementation_type")
@@ -184,7 +198,7 @@ def render_epic_card(fm, body):
   {gate_html}
   <details>
     <summary style="cursor:pointer;font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem;">AI Implementability Signals</summary>
-    {render_signals(signals)}
+    {render_signals(signals, signal_names)}
   </details>
   <div class="epic-body" data-body="{_html_escape(eid)}"></div>
 </div>''', eid, body_for_js
