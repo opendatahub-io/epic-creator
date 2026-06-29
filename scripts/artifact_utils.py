@@ -55,6 +55,11 @@ SCHEMAS = {
             "required": False,
             "default": [],
         },
+        "attachment_source": {
+            "type": "string",
+            "required": False,
+            "default": "",
+        },
     },
     "epic-task": {
         "epic_id": {
