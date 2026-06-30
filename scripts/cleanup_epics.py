@@ -110,14 +110,18 @@ def cleanup_strategy(server, user, token, strat_id, dry_run=False):
             continue
 
         try:
+            closed = True
             if status.lower() != "closed":
                 if _close_as_obsolete(server, user, token, key):
                     print(f"  Closed {key} as Obsolete")
                 else:
-                    print(f"  WARNING: Could not close {key} "
+                    print(f"  ERROR: Could not close {key} "
                           f"(status: {status})", file=sys.stderr)
-            else:
-                print(f"  {key} already closed")
+                    closed = False
+
+            if not closed:
+                errors += 1
+                continue
 
             _clear_parent(server, user, token, key)
             print(f"  Unlinked {key} from {strat_id}")
@@ -126,7 +130,7 @@ def cleanup_strategy(server, user, token, strat_id, dry_run=False):
             print(f"  ERROR on {key}: {e}", file=sys.stderr)
             errors += 1
 
-    if not dry_run and cleaned > 0:
+    if not dry_run and cleaned > 0 and errors == 0:
         try:
             remove_labels(server, user, token, strat_id, [STRAT_LABEL])
             print(f"  Removed {STRAT_LABEL} label from {strat_id}")
@@ -157,9 +161,10 @@ def main():
             parser.error(f"Invalid strategy ID: {sid}")
 
     server, user, token = require_env()
-    if not args.dry_run and not all([server, user, token]):
+    if not all([server, user, token]):
         print("Error: JIRA_SERVER, JIRA_USER, and JIRA_TOKEN env vars "
-              "required.", file=sys.stderr)
+              "required (needed even for --dry-run to query Jira).",
+              file=sys.stderr)
         sys.exit(1)
 
     total_cleaned = 0
