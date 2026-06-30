@@ -276,3 +276,29 @@ class TestHTMLReportBranchFiles:
 
         assert "RHAISTRAT-9999-BRANCH-A-E002" in html
         assert "Branch A Epic" in html
+
+
+class TestSignalSetSelection:
+    """render_epic_card renders the signal set matching the epic type."""
+
+    def test_investigation_epic_renders_investigation_signals(self):
+        from generate_html_report import render_epic_card
+        fm = {"epic_id": "RHAISTRAT-1-E001", "type": "Investigation",
+              "ai_implementability": "High", "ai_implementability_score": 3,
+              "investigation_signals": {
+                  "question_specificity": 1, "source_accessibility": 1,
+                  "local_runnability": 1, "cluster_hardware_dependence": 0,
+                  "human_judgment_required": 0}}
+        html, _, _ = render_epic_card(fm, "## Title\n\nT\n")
+        assert "question_specificity" in html
+        assert "human_judgment_required" in html
+        assert "change_specificity" not in html  # not the 9-signal set
+
+    def test_implementation_epic_renders_ai_signals(self):
+        from generate_html_report import render_epic_card
+        fm = {"epic_id": "RHAISTRAT-1-E002", "type": "Implementation",
+              "ai_implementability": "High", "ai_implementability_score": 3,
+              "ai_signals": {"change_specificity": 1}}
+        html, _, _ = render_epic_card(fm, "## Title\n\nT\n")
+        assert "change_specificity" in html
+        assert "question_specificity" not in html

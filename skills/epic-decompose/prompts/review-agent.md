@@ -67,11 +67,13 @@ Check: For each Investigation epic, verify it has downstream epics that depend o
 
 ### Criterion 5: AI Implementability Scoring (0-2 points)
 
-- **2**: Each signal's +1/0/-1 value in `ai_signals` frontmatter is consistent with the 9-signal rubric conditions and the strategy content. Signal rationales in the ai-signals file are justified.
-- **1**: Most signals are correct but 1-2 signals have arguable values (e.g., a borderline call on `existing_foundation` for a partially-greenfield epic), or signal rationales are present but thin.
-- **0**: Signal values contradict the rubric conditions (e.g., `open_questions: 1` but the epic has unresolved questions that would change implementation approach), or `ai_signals` is missing from frontmatter, or ai-signals file is missing.
+Each epic type uses its own signal set: **Implementation** epics carry `ai_signals` (the 9-signal rubric); **Investigation** epics carry `investigation_signals` (the 5-signal rubric — question_specificity, source_accessibility, local_runnability, cluster_hardware_dependence, human_judgment_required). Evaluate against the rubric matching the epic's `type`. An Implementation epic with `investigation_signals`, or an Investigation epic with `ai_signals`, is itself a scoring error.
 
-Check: For each epic, read `artifacts/epic-tasks/{ID}-ENNN-ai-signals.md` and verify the `ai_signals` values in frontmatter against the rubric conditions and strategy content. Cross-check that the signal rationales match the frontmatter values. Do **not** check arithmetic or thresholds — `ai_implementability` and `ai_implementability_score` are computed by the pipeline, not the decompose agent.
+- **2**: Each signal's value in the type-appropriate frontmatter field is consistent with that rubric's conditions and the strategy content. Signal rationales in the ai-signals file are justified.
+- **1**: Most signals are correct but 1-2 have arguable values (e.g., a borderline `existing_foundation` for a partially-greenfield Implementation epic, or a borderline `source_accessibility` for an Investigation), or signal rationales are present but thin.
+- **0**: Signal values contradict the rubric conditions (e.g. Implementation `open_questions: 1` despite unresolved questions; or an Investigation marking `source_accessibility: 1` when the answer is a pending human decision), or the type-appropriate signal field is missing from frontmatter, or the ai-signals file is missing.
+
+Check: For each epic, read `artifacts/epic-tasks/{ID}-ENNN-ai-signals.md` and verify the signal values in frontmatter (`ai_signals` for Implementation, `investigation_signals` for Investigation) against that rubric's conditions and the strategy content. Cross-check that the signal rationales match the frontmatter values. Do **not** check arithmetic or thresholds — `ai_implementability` and `ai_implementability_score` are computed by the pipeline, not the decompose agent.
 
 ### Criterion 6: Acceptance Criteria Quality (0-2 points)
 
