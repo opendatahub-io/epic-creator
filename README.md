@@ -16,7 +16,7 @@ pip install -r requirements.txt -r requirements-dev.txt
 
 The following environment variables are required for Jira write-back:
 
-```
+```text
 JIRA_SERVER=https://your-instance.atlassian.net
 JIRA_USER=you@example.com
 JIRA_TOKEN=<personal-access-token>
@@ -30,7 +30,7 @@ pytest -q
 
 ## Project layout
 
-```
+```text
 artifacts/      strategy inputs, epic outputs, reviews, pipeline reports
 hooks/          workflow integration hooks
 scripts/        frontmatter.py (YAML frontmatter), state.py (run-state persistence)
