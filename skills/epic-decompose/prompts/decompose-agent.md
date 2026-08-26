@@ -124,7 +124,7 @@ Apply these rules to construct edges between epics:
 
 ### Implementation → Implementation Edges
 12. Framework/library → consumer Implementations always serial (consumers build against framework)
-13. Implementation producing artifact another epic's code builds against (API, CRD, library) → consuming Implementation serial. Does NOT apply to configuration references (image digests, endpoint URLs) — those are AC gates.
+13. Implementation producing artifact another epic's code builds against (API, CRD, library) → consuming Implementation serial. Does NOT apply to configuration references (image digests, endpoint URLs) — those are AC gates. **In particular, an image digest / SHA consumed by OLM/CSV packaging (`RELATED_IMAGE`) is a configuration reference, not a build-against artifact: the packaging epic gets a "pinned image digest available" AC, NOT a `dependencies` edge on the image-build or `konflux-onboarding` epic.** Wiring such an edge both mis-serializes parallel work and violates Rule 10 — the digest is filled in at execution time, so the epics run in parallel.
 14. Implementations in different repos, no shared artifacts → parallel
 15. Implementations in same repo, different areas → parallel (merge conflicts = coordination risk, not dependency)
 
@@ -339,15 +339,35 @@ The pipeline uses this field to detect that you have finished. Until it is set, 
 
 ### Conditional decomposition (when applicable)
 
-If an Investigation epic has ≤3 bounded outcomes that change downstream structure:
+If an Investigation epic has ≤3 bounded outcomes that change downstream structure, write one file per branch epic using the `-BRANCH-<letter>-` filename convention:
 
 ```
-{ID}-E001.md                        # Shared epic (the investigation)
+{ID}-E001.md                        # Shared epic (the Investigation that selects the branch)
 {ID}-BRANCH-A-E003.md               # If outcome A
 {ID}-BRANCH-B-E003.md               # If outcome B
 {ID}-BRANCH-B-E004.md               # Extra epic in branch B
 ```
 
-Document branches in the decomposition summary.
+**Branch epics are not standalone Jira issues.** The pipeline attaches each branch's epics to the gating Investigation epic as a plan document; it does not create them as issues or wire Blocks links from them. Two rules follow, and both are enforced downstream — a branch file that breaks them is silently dropped:
+
+1. **Every branch file MUST set `branch` and `gated_by` in frontmatter** (in addition to the normal epic fields), plus `gate_failure_impact`:
+   - `branch=<letter>` — the outcome label, matching the `-BRANCH-<letter>-` in the filename (`branch=A` for `{ID}-BRANCH-A-E003.md`).
+   - `gated_by={ID}-E001` — the `epic_id` of the **main-plan Investigation** whose outcome selects this branch (must be a real main-plan epic). It **MUST also appear in this branch epic's `dependencies`** — `gated_by` is always a member of `dependencies` (the branch cannot start until the Investigation resolves).
+   - `gate_failure_impact.action=<rewrite|remove|add_remediation> gate_failure_impact.fallback_approach="<text>"`.
+
+   ```bash
+   python3 scripts/frontmatter.py set artifacts/epic-tasks/{ID}-BRANCH-A-E003.md \
+       epic_id="{ID}-BRANCH-A-E003" title="<title>" parent_strat="{ID}" \
+       component="<canonical name>" team="<owner team>" \
+       type=Implementation priority=P0 \
+       branch=A gated_by="{ID}-E001" dependencies="{ID}-E001" \
+       gate_failure_impact.action=rewrite \
+       gate_failure_impact.fallback_approach="<what changes if outcome A does not hold>" \
+       ai_signals.change_specificity=1 ...
+   ```
+
+2. **A main-plan epic MUST NOT list a branch epic in its `dependencies`.** Branch epics are not main-plan nodes, so a dependency on one (e.g. main-plan `E004` depending on `BRANCH-A-E003`) resolves to a nonexistent epic. If a downstream unit of work depends on the *outcome* of the Investigation, depend on / `gated_by` the **Investigation epic** ({ID}-E001), not on a branch outcome. If it depends on a *specific* branch's work, it belongs **inside that branch** (as another `-BRANCH-<letter>-` epic), not in the main plan. A branch epic's own `dependencies` MUST include the gating Investigation (its `gated_by`) and may also reference sibling epics within the same branch.
+
+Document branches in the decomposition summary. Branch epics are excluded from the main-plan critical path; `epic_count` may count either main-plan epics only or all epics including branches.
 
 Do not return a summary. Your work is complete when the decomposition summary and all epic files exist in `artifacts/epic-tasks/`.
